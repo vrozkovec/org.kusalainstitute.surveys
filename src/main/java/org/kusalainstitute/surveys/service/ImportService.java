@@ -21,104 +21,127 @@ import org.slf4j.LoggerFactory;
 /**
  * Service for importing survey data from Excel files into the database.
  */
-public class ImportService {
+public class ImportService
+{
 
-    private static final Logger LOG = LoggerFactory.getLogger(ImportService.class);
+	private static final Logger LOG = LoggerFactory.getLogger(ImportService.class);
 
-    private final PersonDao personDao;
-    private final PreSurveyDao preSurveyDao;
-    private final PostSurveyDao postSurveyDao;
-    private final PreSurveyParser preSurveyParser;
-    private final PostSurveyParser postSurveyParser;
+	private final PersonDao personDao;
+	private final PreSurveyDao preSurveyDao;
+	private final PostSurveyDao postSurveyDao;
+	private final PreSurveyParser preSurveyParser;
+	private final PostSurveyParser postSurveyParser;
 
-    public ImportService() {
-        this.personDao = new PersonDao();
-        this.preSurveyDao = new PreSurveyDao();
-        this.postSurveyDao = new PostSurveyDao();
-        this.preSurveyParser = new PreSurveyParser();
-        this.postSurveyParser = new PostSurveyParser();
-    }
+	public ImportService()
+	{
+		this.personDao = new PersonDao();
+		this.preSurveyDao = new PreSurveyDao();
+		this.postSurveyDao = new PostSurveyDao();
+		this.preSurveyParser = new PreSurveyParser();
+		this.postSurveyParser = new PostSurveyParser();
+	}
 
-    /**
-     * Imports pre-survey data from an Excel file.
-     *
-     * @param filePath path to the pre-survey Excel file
-     * @return number of imported records
-     * @throws IOException  if file cannot be read
-     * @throws SQLException if database operation fails
-     */
-    public int importPreSurvey(Path filePath) throws IOException, SQLException {
-        LOG.info("Importing pre-survey data from: {}", filePath);
+	/**
+	 * Imports pre-survey data from an Excel file.
+	 *
+	 * @param filePath
+	 *            path to the pre-survey Excel file
+	 * @return number of imported records
+	 * @throws IOException
+	 *             if file cannot be read
+	 * @throws SQLException
+	 *             if database operation fails
+	 */
+	public int importPreSurvey(Path filePath) throws IOException, SQLException
+	{
+		LOG.info("Importing pre-survey data from: {}", filePath);
 
-        List<ParsedPreSurvey> parsed = preSurveyParser.parse(filePath);
-        int imported = 0;
+		List<ParsedPreSurvey> parsed = preSurveyParser.parse(filePath);
+		int imported = 0;
 
-        for (ParsedPreSurvey p : parsed) {
-            try {
-                // Insert person
-                Person person = personDao.insert(p.person());
+		for (ParsedPreSurvey p : parsed)
+		{
+			try
+			{
+				// Insert person
+				Person person = personDao.insert(p.person());
 
-                // Insert response linked to person
-                PreSurveyResponse response = p.response();
-                response.setPersonId(person.getId());
-                preSurveyDao.insert(response);
+				// Insert response linked to person
+				PreSurveyResponse response = p.response();
+				response.setPersonId(person.getId());
+				preSurveyDao.insert(response);
 
-                imported++;
-            } catch (SQLException e) {
-                LOG.warn("Error importing row {}: {}", p.response().getRowNumber(), e.getMessage());
-            }
-        }
+				imported++;
+			}
+			catch (SQLException e)
+			{
+				LOG.warn("Error importing row {}: {}", p.response().getRowNumber(), e.getMessage());
+			}
+		}
 
-        LOG.info("Imported {} pre-survey records", imported);
-        return imported;
-    }
+		LOG.info("Imported {} pre-survey records", imported);
+		return imported;
+	}
 
-    /**
-     * Imports post-survey data from an Excel file.
-     *
-     * @param filePath path to the post-survey Excel file
-     * @return number of imported records
-     * @throws IOException  if file cannot be read
-     * @throws SQLException if database operation fails
-     */
-    public int importPostSurvey(Path filePath) throws IOException, SQLException {
-        LOG.info("Importing post-survey data from: {}", filePath);
+	/**
+	 * Imports post-survey data from an Excel file.
+	 *
+	 * @param filePath
+	 *            path to the post-survey Excel file
+	 * @return number of imported records
+	 * @throws IOException
+	 *             if file cannot be read
+	 * @throws SQLException
+	 *             if database operation fails
+	 */
+	public int importPostSurvey(Path filePath) throws IOException, SQLException
+	{
+		LOG.info("Importing post-survey data from: {}", filePath);
 
-        List<ParsedPostSurvey> parsed = postSurveyParser.parse(filePath);
-        int imported = 0;
+		List<ParsedPostSurvey> parsed = postSurveyParser.parse(filePath);
+		int imported = 0;
 
-        for (ParsedPostSurvey p : parsed) {
-            try {
-                // Insert person
-                Person person = personDao.insert(p.person());
+		for (ParsedPostSurvey p : parsed)
+		{
+			try
+			{
+				// Insert person
+				Person person = personDao.insert(p.person());
 
-                // Insert response linked to person
-                PostSurveyResponse response = p.response();
-                response.setPersonId(person.getId());
-                postSurveyDao.insert(response);
+				// Insert response linked to person
+				PostSurveyResponse response = p.response();
+				response.setPersonId(person.getId());
+				postSurveyDao.insert(response);
 
-                imported++;
-            } catch (SQLException e) {
-                LOG.warn("Error importing row {}: {}", p.response().getRowNumber(), e.getMessage());
-            }
-        }
+				imported++;
+			}
+			catch (SQLException e)
+			{
+				LOG.warn("Error importing row {}: {}", p.response().getRowNumber(), e.getMessage());
+			}
+		}
 
-        LOG.info("Imported {} post-survey records", imported);
-        return imported;
-    }
+		LOG.info("Imported {} post-survey records", imported);
+		return imported;
+	}
 
-    /**
-     * Imports both pre and post surveys from their respective files.
-     *
-     * @param preFilePath  path to pre-survey file
-     * @param postFilePath path to post-survey file
-     * @return total number of imported records
-     * @throws IOException  if files cannot be read
-     * @throws SQLException if database operation fails
-     */
-    public int importAll(Path preFilePath, Path postFilePath) throws IOException, SQLException {
-        int preCount = importPreSurvey(preFilePath);
-        int postCount = importPostSurvey(postFilePath);
-        return preCount + postCount;
-    }
+	/**
+	 * Imports both pre and post surveys from their respective files.
+	 *
+	 * @param preFilePath
+	 *            path to pre-survey file
+	 * @param postFilePath
+	 *            path to post-survey file
+	 * @return total number of imported records
+	 * @throws IOException
+	 *             if files cannot be read
+	 * @throws SQLException
+	 *             if database operation fails
+	 */
+	public int importAll(Path preFilePath, Path postFilePath) throws IOException, SQLException
+	{
+		int preCount = importPreSurvey(preFilePath);
+		int postCount = importPostSurvey(postFilePath);
+		return preCount + postCount;
+	}
 }
