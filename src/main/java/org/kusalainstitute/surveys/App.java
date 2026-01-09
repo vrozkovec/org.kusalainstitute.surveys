@@ -1,0 +1,267 @@
+package org.kusalainstitute.surveys;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.concurrent.Callable;
+
+import org.kusalainstitute.surveys.config.DatabaseConfig;
+import org.kusalainstitute.surveys.dao.MatchDao;
+import org.kusalainstitute.surveys.pojo.Person;
+import org.kusalainstitute.surveys.service.AnalysisService;
+import org.kusalainstitute.surveys.service.AnalysisService.AnalysisResult;
+import org.kusalainstitute.surveys.service.ImportService;
+import org.kusalainstitute.surveys.service.MatchingService;
+
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+
+/**
+ * CLI application for Kusala Institute Survey Analysis.
+ */
+@Command(
+        name = "surveys",
+        mixinStandardHelpOptions = true,
+        version = "1.0.0",
+        description = "Kusala Institute Survey Analysis Tool",
+        subcommands = {
+                App.InitCommand.class,
+                App.ImportCommand.class,
+                App.MatchCommand.class,
+                App.AnalyzeCommand.class
+        }
+)
+public class App implements Callable<Integer> {
+
+    public static void main(String[] args) {
+        int exitCode = new CommandLine(new App()).execute(args);
+        System.exit(exitCode);
+    }
+
+    @Override
+    public Integer call() {
+        // Show help when no command specified
+        CommandLine.usage(this, System.out);
+        return 0;
+    }
+
+    /**
+     * Initialize database (run migrations).
+     */
+    @Command(name = "init", description = "Initialize database schema")
+    static class InitCommand implements Callable<Integer> {
+
+        @Override
+        public Integer call() {
+            System.out.println("Initializing database...");
+            try {
+                DatabaseConfig.getInstance().runMigrations();
+                System.out.println("Database initialized successfully.");
+                return 0;
+            } catch (Exception e) {
+                System.err.println("Error initializing database: " + e.getMessage());
+                e.printStackTrace();
+                return 1;
+            }
+        }
+    }
+
+    /**
+     * Import survey data from Excel files.
+     */
+    @Command(name = "import", description = "Import survey data from Excel files")
+    static class ImportCommand implements Callable<Integer> {
+
+        @Option(names = {"--pre"}, description = "Path to pre-survey Excel file")
+        private Path preFile;
+
+        @Option(names = {"--post"}, description = "Path to post-survey Excel file")
+        private Path postFile;
+
+        @Override
+        public Integer call() {
+            if (preFile == null && postFile == null) {
+                System.err.println("Please specify --pre and/or --post file paths");
+                return 1;
+            }
+
+            try {
+                // Ensure database is initialized
+                DatabaseConfig.getInstance().runMigrations();
+
+                ImportService importService = new ImportService();
+                int total = 0;
+
+                if (preFile != null) {
+                    System.out.println("Importing pre-survey data from: " + preFile);
+                    int count = importService.importPreSurvey(preFile);
+                    System.out.println("Imported " + count + " pre-survey records");
+                    total += count;
+                }
+
+                if (postFile != null) {
+                    System.out.println("Importing post-survey data from: " + postFile);
+                    int count = importService.importPostSurvey(postFile);
+                    System.out.println("Imported " + count + " post-survey records");
+                    total += count;
+                }
+
+                System.out.println("Total imported: " + total + " records");
+                return 0;
+
+            } catch (IOException | SQLException e) {
+                System.err.println("Error importing data: " + e.getMessage());
+                e.printStackTrace();
+                return 1;
+            }
+        }
+    }
+
+    /**
+     * Match pre and post survey respondents.
+     */
+    @Command(name = "match", description = "Match pre and post survey respondents")
+    static class MatchCommand implements Callable<Integer> {
+
+        @Option(names = {"--auto"}, description = "Run automatic matching")
+        private boolean auto;
+
+        @Option(names = {"--status"}, description = "Show matching status")
+        private boolean status;
+
+        @Option(names = {"--unmatched"}, description = "List unmatched persons")
+        private boolean unmatched;
+
+        @Override
+        public Integer call() {
+            try {
+                MatchingService matchingService = new MatchingService();
+
+                if (status) {
+                    showStatus(matchingService);
+                    return 0;
+                }
+
+                if (unmatched) {
+                    showUnmatched(matchingService);
+                    return 0;
+                }
+
+                if (auto) {
+                    System.out.println("Running automatic matching...");
+                    MatchingService.MatchResult result = matchingService.runAutoMatch();
+                    System.out.println("Email matches: " + result.emailMatches());
+                    System.out.println("Name matches: " + result.nameMatches());
+                    System.out.println("Total new matches: " + result.totalMatches());
+                    return 0;
+                }
+
+                // Default: show status
+                showStatus(matchingService);
+                return 0;
+
+            } catch (SQLException e) {
+                System.err.println("Error: " + e.getMessage());
+                e.printStackTrace();
+                return 1;
+            }
+        }
+
+        private void showStatus(MatchingService service) throws SQLException {
+            MatchDao.MatchStatistics stats = service.getStatistics();
+            System.out.println("=== Matching Status ===");
+            System.out.println("Total matches: " + stats.totalMatches());
+            System.out.println("  - Auto (email): " + stats.autoEmailMatches());
+            System.out.println("  - Auto (name): " + stats.autoNameMatches());
+            System.out.println("  - Manual: " + stats.manualMatches());
+
+            List<Person> unmatchedPre = service.getUnmatchedPre();
+            List<Person> unmatchedPost = service.getUnmatchedPost();
+            System.out.println("Unmatched pre-survey: " + unmatchedPre.size());
+            System.out.println("Unmatched post-survey: " + unmatchedPost.size());
+        }
+
+        private void showUnmatched(MatchingService service) throws SQLException {
+            List<Person> unmatchedPre = service.getUnmatchedPre();
+            List<Person> unmatchedPost = service.getUnmatchedPost();
+
+            System.out.println("=== Unmatched Pre-Survey (" + unmatchedPre.size() + ") ===");
+            for (Person p : unmatchedPre) {
+                System.out.printf("  [%d] %s | %s | %s%n",
+                        p.getId(), p.getCohort(), p.getName(), p.getEmail());
+            }
+
+            System.out.println();
+            System.out.println("=== Unmatched Post-Survey (" + unmatchedPost.size() + ") ===");
+            for (Person p : unmatchedPost) {
+                System.out.printf("  [%d] %s | %s | %s%n",
+                        p.getId(), p.getCohort(), p.getName(), p.getEmail());
+            }
+        }
+    }
+
+    /**
+     * Analyze survey data.
+     */
+    @Command(name = "analyze", description = "Analyze survey data and generate statistics")
+    static class AnalyzeCommand implements Callable<Integer> {
+
+        @Override
+        public Integer call() {
+            try {
+                System.out.println("Analyzing survey data...");
+                AnalysisService analysisService = new AnalysisService();
+                AnalysisResult result = analysisService.analyze();
+
+                System.out.println();
+                System.out.println("=== Survey Analysis Results ===");
+                System.out.println();
+                System.out.println("Response Counts:");
+                System.out.println("  Pre-survey responses: " + result.preCount());
+                System.out.println("  Post-survey responses: " + result.postCount());
+                System.out.println("  Matched pairs: " + result.matchedCount());
+                System.out.println();
+                System.out.println("Cohorts: " + String.join(", ", result.cohorts()));
+                System.out.println();
+                System.out.println("Pre-Survey Averages (1-4 scale):");
+                System.out.println("  Speaking confidence: " + result.avgPreSpeaking());
+                System.out.println("  Understanding confidence: " + result.avgPreUnderstanding());
+                System.out.println();
+                System.out.println("Post-Survey Averages (1-4 scale):");
+                System.out.println("  Speaking ability: " + result.avgPostSpeaking());
+                System.out.println();
+                System.out.println("Matched Pair Analysis:");
+                System.out.println("  Average confidence change: " + result.avgConfidenceChange());
+                System.out.println();
+
+                if (!result.matchedPairAnalyses().isEmpty()) {
+                    System.out.println("Individual Matched Pairs:");
+                    System.out.println("Cohort | Name | Pre Speaking | Post Speaking | Change");
+                    System.out.println("-".repeat(70));
+                    for (var analysis : result.matchedPairAnalyses()) {
+                        System.out.printf("%s | %s | %s | %s | %s%n",
+                                analysis.cohort(),
+                                truncate(analysis.name(), 20),
+                                analysis.preSpeakingConfidence(),
+                                analysis.postSpeakingAbility(),
+                                analysis.confidenceChange());
+                    }
+                }
+
+                return 0;
+
+            } catch (SQLException e) {
+                System.err.println("Error analyzing data: " + e.getMessage());
+                e.printStackTrace();
+                return 1;
+            }
+        }
+
+        private String truncate(String s, int maxLen) {
+            if (s == null) return "";
+            return s.length() > maxLen ? s.substring(0, maxLen - 3) + "..." : s;
+        }
+    }
+}
