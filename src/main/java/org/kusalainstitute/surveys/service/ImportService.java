@@ -2,9 +2,9 @@ package org.kusalainstitute.surveys.service;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.sql.SQLException;
 import java.util.List;
 
+import org.jdbi.v3.core.Jdbi;
 import org.kusalainstitute.surveys.dao.PersonDao;
 import org.kusalainstitute.surveys.dao.PostSurveyDao;
 import org.kusalainstitute.surveys.dao.PreSurveyDao;
@@ -18,25 +18,32 @@ import org.kusalainstitute.surveys.pojo.PreSurveyResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+
 /**
  * Service for importing survey data from Excel files into the database.
  */
+@Singleton
 public class ImportService
 {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ImportService.class);
 
-	private final PersonDao personDao;
-	private final PreSurveyDao preSurveyDao;
-	private final PostSurveyDao postSurveyDao;
+	private final Jdbi jdbi;
 	private final PreSurveyParser preSurveyParser;
 	private final PostSurveyParser postSurveyParser;
 
-	public ImportService()
+	/**
+	 * Creates a new ImportService with injected JDBI instance.
+	 *
+	 * @param jdbi
+	 *            the JDBI instance for database access
+	 */
+	@Inject
+	public ImportService(Jdbi jdbi)
 	{
-		this.personDao = new PersonDao();
-		this.preSurveyDao = new PreSurveyDao();
-		this.postSurveyDao = new PostSurveyDao();
+		this.jdbi = jdbi;
 		this.preSurveyParser = new PreSurveyParser();
 		this.postSurveyParser = new PostSurveyParser();
 	}
@@ -49,35 +56,42 @@ public class ImportService
 	 * @return number of imported records
 	 * @throws IOException
 	 *             if file cannot be read
-	 * @throws SQLException
-	 *             if database operation fails
 	 */
-	public int importPreSurvey(Path filePath) throws IOException, SQLException
+	public int importPreSurvey(Path filePath) throws IOException
 	{
 		LOG.info("Importing pre-survey data from: {}", filePath);
 
 		List<ParsedPreSurvey> parsed = preSurveyParser.parse(filePath);
-		int imported = 0;
 
-		for (ParsedPreSurvey p : parsed)
-		{
-			try
+		int imported = jdbi.withHandle(handle -> {
+			PersonDao personDao = handle.attach(PersonDao.class);
+			PreSurveyDao preSurveyDao = handle.attach(PreSurveyDao.class);
+
+			int count = 0;
+			for (ParsedPreSurvey p : parsed)
 			{
-				// Insert person
-				Person person = personDao.insert(p.person());
+				try
+				{
+					// Insert person
+					Person person = p.person();
+					long personId = personDao.insert(person);
+					person.setId(personId);
 
-				// Insert response linked to person
-				PreSurveyResponse response = p.response();
-				response.setPersonId(person.getId());
-				preSurveyDao.insert(response);
+					// Insert response linked to person
+					PreSurveyResponse response = p.response();
+					response.setPersonId(personId);
+					long responseId = preSurveyDao.insert(response);
+					response.setId(responseId);
 
-				imported++;
+					count++;
+				}
+				catch (Exception e)
+				{
+					LOG.warn("Error importing row {}: {}", p.response().getRowNumber(), e.getMessage());
+				}
 			}
-			catch (SQLException e)
-			{
-				LOG.warn("Error importing row {}: {}", p.response().getRowNumber(), e.getMessage());
-			}
-		}
+			return count;
+		});
 
 		LOG.info("Imported {} pre-survey records", imported);
 		return imported;
@@ -91,35 +105,42 @@ public class ImportService
 	 * @return number of imported records
 	 * @throws IOException
 	 *             if file cannot be read
-	 * @throws SQLException
-	 *             if database operation fails
 	 */
-	public int importPostSurvey(Path filePath) throws IOException, SQLException
+	public int importPostSurvey(Path filePath) throws IOException
 	{
 		LOG.info("Importing post-survey data from: {}", filePath);
 
 		List<ParsedPostSurvey> parsed = postSurveyParser.parse(filePath);
-		int imported = 0;
 
-		for (ParsedPostSurvey p : parsed)
-		{
-			try
+		int imported = jdbi.withHandle(handle -> {
+			PersonDao personDao = handle.attach(PersonDao.class);
+			PostSurveyDao postSurveyDao = handle.attach(PostSurveyDao.class);
+
+			int count = 0;
+			for (ParsedPostSurvey p : parsed)
 			{
-				// Insert person
-				Person person = personDao.insert(p.person());
+				try
+				{
+					// Insert person
+					Person person = p.person();
+					long personId = personDao.insert(person);
+					person.setId(personId);
 
-				// Insert response linked to person
-				PostSurveyResponse response = p.response();
-				response.setPersonId(person.getId());
-				postSurveyDao.insert(response);
+					// Insert response linked to person
+					PostSurveyResponse response = p.response();
+					response.setPersonId(personId);
+					long responseId = postSurveyDao.insert(response);
+					response.setId(responseId);
 
-				imported++;
+					count++;
+				}
+				catch (Exception e)
+				{
+					LOG.warn("Error importing row {}: {}", p.response().getRowNumber(), e.getMessage());
+				}
 			}
-			catch (SQLException e)
-			{
-				LOG.warn("Error importing row {}: {}", p.response().getRowNumber(), e.getMessage());
-			}
-		}
+			return count;
+		});
 
 		LOG.info("Imported {} post-survey records", imported);
 		return imported;
@@ -135,10 +156,8 @@ public class ImportService
 	 * @return total number of imported records
 	 * @throws IOException
 	 *             if files cannot be read
-	 * @throws SQLException
-	 *             if database operation fails
 	 */
-	public int importAll(Path preFilePath, Path postFilePath) throws IOException, SQLException
+	public int importAll(Path preFilePath, Path postFilePath) throws IOException
 	{
 		int preCount = importPreSurvey(preFilePath);
 		int postCount = importPostSurvey(postFilePath);

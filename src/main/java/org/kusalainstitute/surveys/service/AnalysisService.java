@@ -2,11 +2,11 @@ package org.kusalainstitute.surveys.service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.jdbi.v3.core.Jdbi;
 import org.kusalainstitute.surveys.dao.MatchDao;
 import org.kusalainstitute.surveys.dao.PersonDao;
 import org.kusalainstitute.surveys.dao.PostSurveyDao;
@@ -19,72 +19,94 @@ import org.kusalainstitute.surveys.pojo.enums.SurveyType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+
 /**
  * Service for analyzing survey data and calculating statistics.
  */
+@Singleton
 public class AnalysisService
 {
 
 	private static final Logger LOG = LoggerFactory.getLogger(AnalysisService.class);
 
-	private final PersonDao personDao;
-	private final PreSurveyDao preSurveyDao;
-	private final PostSurveyDao postSurveyDao;
-	private final MatchDao matchDao;
+	private final Jdbi jdbi;
 
-	public AnalysisService()
+	/**
+	 * Creates a new AnalysisService with injected JDBI instance.
+	 *
+	 * @param jdbi
+	 *            the JDBI instance for database access
+	 */
+	@Inject
+	public AnalysisService(Jdbi jdbi)
 	{
-		this.personDao = new PersonDao();
-		this.preSurveyDao = new PreSurveyDao();
-		this.postSurveyDao = new PostSurveyDao();
-		this.matchDao = new MatchDao();
+		this.jdbi = jdbi;
 	}
 
 	/**
 	 * Generates a comprehensive analysis of the survey data.
 	 *
 	 * @return analysis results
-	 * @throws SQLException
-	 *             if database operation fails
 	 */
-	public AnalysisResult analyze() throws SQLException
+	public AnalysisResult analyze()
 	{
 		LOG.info("Running survey analysis...");
 
-		// Get counts
-		List<Person> prePeople = personDao.findAllByType(SurveyType.PRE);
-		List<Person> postPeople = personDao.findAllByType(SurveyType.POST);
-		List<PersonMatch> matches = matchDao.findAll();
+		return jdbi.withHandle(handle ->
+		{
+			PersonDao personDao = handle.attach(PersonDao.class);
+			PreSurveyDao preSurveyDao = handle.attach(PreSurveyDao.class);
+			PostSurveyDao postSurveyDao = handle.attach(PostSurveyDao.class);
+			MatchDao matchDao = handle.attach(MatchDao.class);
 
-		// Calculate pre-survey averages
-		List<PreSurveyResponse> preResponses = preSurveyDao.findAll();
-		BigDecimal avgPreSpeaking = calculateAveragePreSpeaking(preResponses);
-		BigDecimal avgPreUnderstanding = calculateAveragePreUnderstanding(preResponses);
+			// Get counts
+			List<Person> prePeople = personDao.findAllByType(SurveyType.PRE);
+			List<Person> postPeople = personDao.findAllByType(SurveyType.POST);
+			List<PersonMatch> matches = matchDao.findAll();
 
-		// Calculate post-survey averages
-		List<PostSurveyResponse> postResponses = postSurveyDao.findAll();
-		BigDecimal avgPostSpeaking = calculateAveragePostSpeaking(postResponses);
+			// Calculate pre-survey averages
+			List<PreSurveyResponse> preResponses = preSurveyDao.findAll();
+			BigDecimal avgPreSpeaking = calculateAveragePreSpeaking(preResponses);
+			BigDecimal avgPreUnderstanding = calculateAveragePreUnderstanding(preResponses);
 
-		// Calculate matched pair changes
-		List<MatchedPairAnalysis> matchedAnalyses = analyzeMatchedPairs(matches);
-		BigDecimal avgConfidenceChange = calculateAverageConfidenceChange(matchedAnalyses);
+			// Calculate post-survey averages
+			List<PostSurveyResponse> postResponses = postSurveyDao.findAll();
+			BigDecimal avgPostSpeaking = calculateAveragePostSpeaking(postResponses);
 
-		// Get cohort breakdown
-		List<String> cohorts = personDao.findAllCohorts();
+			// Calculate matched pair changes
+			List<MatchedPairAnalysis> matchedAnalyses = analyzeMatchedPairs(matches, personDao, preSurveyDao, postSurveyDao);
+			BigDecimal avgConfidenceChange = calculateAverageConfidenceChange(matchedAnalyses);
 
-		AnalysisResult result = new AnalysisResult(prePeople.size(), postPeople.size(), matches.size(), avgPreSpeaking,
-			avgPreUnderstanding, avgPostSpeaking, avgConfidenceChange, matchedAnalyses, cohorts);
+			// Get cohort breakdown
+			List<String> cohorts = personDao.findAllCohorts();
 
-		LOG.info("Analysis complete: {} pre, {} post, {} matches, avg change: {}", result.preCount(), result.postCount(),
-			result.matchedCount(), result.avgConfidenceChange());
+			AnalysisResult result = new AnalysisResult(prePeople.size(), postPeople.size(), matches.size(), avgPreSpeaking,
+				avgPreUnderstanding, avgPostSpeaking, avgConfidenceChange, matchedAnalyses, cohorts);
 
-		return result;
+			LOG.info("Analysis complete: {} pre, {} post, {} matches, avg change: {}", result.preCount(), result.postCount(),
+				result.matchedCount(), result.avgConfidenceChange());
+
+			return result;
+		});
 	}
 
 	/**
 	 * Analyzes all matched pairs to calculate confidence changes.
+	 *
+	 * @param matches
+	 *            list of person matches to analyze
+	 * @param personDao
+	 *            DAO for person lookups
+	 * @param preSurveyDao
+	 *            DAO for pre-survey responses
+	 * @param postSurveyDao
+	 *            DAO for post-survey responses
+	 * @return list of matched pair analyses
 	 */
-	private List<MatchedPairAnalysis> analyzeMatchedPairs(List<PersonMatch> matches) throws SQLException
+	private List<MatchedPairAnalysis> analyzeMatchedPairs(List<PersonMatch> matches, PersonDao personDao,
+		PreSurveyDao preSurveyDao, PostSurveyDao postSurveyDao)
 	{
 		List<MatchedPairAnalysis> results = new ArrayList<>();
 

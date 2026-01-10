@@ -2,17 +2,22 @@ package org.kusalainstitute.surveys;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import org.kusalainstitute.surveys.config.DatabaseConfig;
+import org.flywaydb.core.Flyway;
+import org.kusalainstitute.surveys.config.GuiceFactory;
+import org.kusalainstitute.surveys.config.SurveysModule;
 import org.kusalainstitute.surveys.dao.MatchDao;
 import org.kusalainstitute.surveys.pojo.Person;
 import org.kusalainstitute.surveys.service.AnalysisService;
 import org.kusalainstitute.surveys.service.AnalysisService.AnalysisResult;
 import org.kusalainstitute.surveys.service.ImportService;
 import org.kusalainstitute.surveys.service.MatchingService;
+
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -26,9 +31,16 @@ import picocli.CommandLine.Option;
 public class App implements Callable<Integer>
 {
 
+	/**
+	 * Main entry point for the CLI application.
+	 *
+	 * @param args
+	 *            command line arguments
+	 */
 	public static void main(String[] args)
 	{
-		int exitCode = new CommandLine(new App()).execute(args);
+		Injector injector = Guice.createInjector(new SurveysModule());
+		int exitCode = new CommandLine(new App(), new GuiceFactory(injector)).execute(args);
 		System.exit(exitCode);
 	}
 
@@ -47,13 +59,27 @@ public class App implements Callable<Integer>
 	static class InitCommand implements Callable<Integer>
 	{
 
+		private final Flyway flyway;
+
+		/**
+		 * Creates a new InitCommand with injected Flyway.
+		 *
+		 * @param flyway
+		 *            the Flyway instance for migrations
+		 */
+		@Inject
+		public InitCommand(Flyway flyway)
+		{
+			this.flyway = flyway;
+		}
+
 		@Override
 		public Integer call()
 		{
 			System.out.println("Initializing database...");
 			try
 			{
-				DatabaseConfig.getInstance().runMigrations();
+				flyway.migrate();
 				System.out.println("Database initialized successfully.");
 				return 0;
 			}
@@ -73,11 +99,29 @@ public class App implements Callable<Integer>
 	static class ImportCommand implements Callable<Integer>
 	{
 
+		private final Flyway flyway;
+		private final ImportService importService;
+
 		@Option(names = { "--pre" }, description = "Path to pre-survey Excel file")
 		private Path preFile;
 
 		@Option(names = { "--post" }, description = "Path to post-survey Excel file")
 		private Path postFile;
+
+		/**
+		 * Creates a new ImportCommand with injected dependencies.
+		 *
+		 * @param flyway
+		 *            the Flyway instance for migrations
+		 * @param importService
+		 *            the import service
+		 */
+		@Inject
+		public ImportCommand(Flyway flyway, ImportService importService)
+		{
+			this.flyway = flyway;
+			this.importService = importService;
+		}
 
 		@Override
 		public Integer call()
@@ -91,9 +135,8 @@ public class App implements Callable<Integer>
 			try
 			{
 				// Ensure database is initialized
-				DatabaseConfig.getInstance().runMigrations();
+				flyway.migrate();
 
-				ImportService importService = new ImportService();
 				int total = 0;
 
 				if (preFile != null)
@@ -116,7 +159,7 @@ public class App implements Callable<Integer>
 				return 0;
 
 			}
-			catch (IOException | SQLException e)
+			catch (IOException e)
 			{
 				System.err.println("Error importing data: " + e.getMessage());
 				e.printStackTrace();
@@ -132,6 +175,8 @@ public class App implements Callable<Integer>
 	static class MatchCommand implements Callable<Integer>
 	{
 
+		private final MatchingService matchingService;
+
 		@Option(names = { "--auto" }, description = "Run automatic matching")
 		private boolean auto;
 
@@ -141,67 +186,67 @@ public class App implements Callable<Integer>
 		@Option(names = { "--unmatched" }, description = "List unmatched persons")
 		private boolean unmatched;
 
+		/**
+		 * Creates a new MatchCommand with injected MatchingService.
+		 *
+		 * @param matchingService
+		 *            the matching service
+		 */
+		@Inject
+		public MatchCommand(MatchingService matchingService)
+		{
+			this.matchingService = matchingService;
+		}
+
 		@Override
 		public Integer call()
 		{
-			try
+			if (status)
 			{
-				MatchingService matchingService = new MatchingService();
-
-				if (status)
-				{
-					showStatus(matchingService);
-					return 0;
-				}
-
-				if (unmatched)
-				{
-					showUnmatched(matchingService);
-					return 0;
-				}
-
-				if (auto)
-				{
-					System.out.println("Running automatic matching...");
-					MatchingService.MatchResult result = matchingService.runAutoMatch();
-					System.out.println("Email matches: " + result.emailMatches());
-					System.out.println("Name matches: " + result.nameMatches());
-					System.out.println("Total new matches: " + result.totalMatches());
-					return 0;
-				}
-
-				// Default: show status
-				showStatus(matchingService);
+				showStatus();
 				return 0;
+			}
 
-			}
-			catch (SQLException e)
+			if (unmatched)
 			{
-				System.err.println("Error: " + e.getMessage());
-				e.printStackTrace();
-				return 1;
+				showUnmatched();
+				return 0;
 			}
+
+			if (auto)
+			{
+				System.out.println("Running automatic matching...");
+				MatchingService.MatchResult result = matchingService.runAutoMatch();
+				System.out.println("Email matches: " + result.emailMatches());
+				System.out.println("Name matches: " + result.nameMatches());
+				System.out.println("Total new matches: " + result.totalMatches());
+				return 0;
+			}
+
+			// Default: show status
+			showStatus();
+			return 0;
 		}
 
-		private void showStatus(MatchingService service) throws SQLException
+		private void showStatus()
 		{
-			MatchDao.MatchStatistics stats = service.getStatistics();
+			MatchDao.MatchStatistics stats = matchingService.getStatistics();
 			System.out.println("=== Matching Status ===");
 			System.out.println("Total matches: " + stats.totalMatches());
 			System.out.println("  - Auto (email): " + stats.autoEmailMatches());
 			System.out.println("  - Auto (name): " + stats.autoNameMatches());
 			System.out.println("  - Manual: " + stats.manualMatches());
 
-			List<Person> unmatchedPre = service.getUnmatchedPre();
-			List<Person> unmatchedPost = service.getUnmatchedPost();
+			List<Person> unmatchedPre = matchingService.getUnmatchedPre();
+			List<Person> unmatchedPost = matchingService.getUnmatchedPost();
 			System.out.println("Unmatched pre-survey: " + unmatchedPre.size());
 			System.out.println("Unmatched post-survey: " + unmatchedPost.size());
 		}
 
-		private void showUnmatched(MatchingService service) throws SQLException
+		private void showUnmatched()
 		{
-			List<Person> unmatchedPre = service.getUnmatchedPre();
-			List<Person> unmatchedPost = service.getUnmatchedPost();
+			List<Person> unmatchedPre = matchingService.getUnmatchedPre();
+			List<Person> unmatchedPost = matchingService.getUnmatchedPost();
 
 			System.out.println("=== Unmatched Pre-Survey (" + unmatchedPre.size() + ") ===");
 			for (Person p : unmatchedPre)
@@ -225,57 +270,60 @@ public class App implements Callable<Integer>
 	static class AnalyzeCommand implements Callable<Integer>
 	{
 
+		private final AnalysisService analysisService;
+
+		/**
+		 * Creates a new AnalyzeCommand with injected AnalysisService.
+		 *
+		 * @param analysisService
+		 *            the analysis service
+		 */
+		@Inject
+		public AnalyzeCommand(AnalysisService analysisService)
+		{
+			this.analysisService = analysisService;
+		}
+
 		@Override
 		public Integer call()
 		{
-			try
+			System.out.println("Analyzing survey data...");
+			AnalysisResult result = analysisService.analyze();
+
+			System.out.println();
+			System.out.println("=== Survey Analysis Results ===");
+			System.out.println();
+			System.out.println("Response Counts:");
+			System.out.println("  Pre-survey responses: " + result.preCount());
+			System.out.println("  Post-survey responses: " + result.postCount());
+			System.out.println("  Matched pairs: " + result.matchedCount());
+			System.out.println();
+			System.out.println("Cohorts: " + String.join(", ", result.cohorts()));
+			System.out.println();
+			System.out.println("Pre-Survey Averages (1-4 scale):");
+			System.out.println("  Speaking confidence: " + result.avgPreSpeaking());
+			System.out.println("  Understanding confidence: " + result.avgPreUnderstanding());
+			System.out.println();
+			System.out.println("Post-Survey Averages (1-4 scale):");
+			System.out.println("  Speaking ability: " + result.avgPostSpeaking());
+			System.out.println();
+			System.out.println("Matched Pair Analysis:");
+			System.out.println("  Average confidence change: " + result.avgConfidenceChange());
+			System.out.println();
+
+			if (!result.matchedPairAnalyses().isEmpty())
 			{
-				System.out.println("Analyzing survey data...");
-				AnalysisService analysisService = new AnalysisService();
-				AnalysisResult result = analysisService.analyze();
-
-				System.out.println();
-				System.out.println("=== Survey Analysis Results ===");
-				System.out.println();
-				System.out.println("Response Counts:");
-				System.out.println("  Pre-survey responses: " + result.preCount());
-				System.out.println("  Post-survey responses: " + result.postCount());
-				System.out.println("  Matched pairs: " + result.matchedCount());
-				System.out.println();
-				System.out.println("Cohorts: " + String.join(", ", result.cohorts()));
-				System.out.println();
-				System.out.println("Pre-Survey Averages (1-4 scale):");
-				System.out.println("  Speaking confidence: " + result.avgPreSpeaking());
-				System.out.println("  Understanding confidence: " + result.avgPreUnderstanding());
-				System.out.println();
-				System.out.println("Post-Survey Averages (1-4 scale):");
-				System.out.println("  Speaking ability: " + result.avgPostSpeaking());
-				System.out.println();
-				System.out.println("Matched Pair Analysis:");
-				System.out.println("  Average confidence change: " + result.avgConfidenceChange());
-				System.out.println();
-
-				if (!result.matchedPairAnalyses().isEmpty())
+				System.out.println("Individual Matched Pairs:");
+				System.out.println("Cohort | Name | Pre Speaking | Post Speaking | Change");
+				System.out.println("-".repeat(70));
+				for (var analysis : result.matchedPairAnalyses())
 				{
-					System.out.println("Individual Matched Pairs:");
-					System.out.println("Cohort | Name | Pre Speaking | Post Speaking | Change");
-					System.out.println("-".repeat(70));
-					for (var analysis : result.matchedPairAnalyses())
-					{
-						System.out.printf("%s | %s | %s | %s | %s%n", analysis.cohort(), truncate(analysis.name(), 20),
-							analysis.preSpeakingConfidence(), analysis.postSpeakingAbility(), analysis.confidenceChange());
-					}
+					System.out.printf("%s | %s | %s | %s | %s%n", analysis.cohort(), truncate(analysis.name(), 20),
+						analysis.preSpeakingConfidence(), analysis.postSpeakingAbility(), analysis.confidenceChange());
 				}
-
-				return 0;
-
 			}
-			catch (SQLException e)
-			{
-				System.err.println("Error analyzing data: " + e.getMessage());
-				e.printStackTrace();
-				return 1;
-			}
+
+			return 0;
 		}
 
 		private String truncate(String s, int maxLen)

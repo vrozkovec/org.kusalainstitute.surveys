@@ -1,79 +1,36 @@
 package org.kusalainstitute.surveys.dao;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
+import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindBean;
+import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
+import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.kusalainstitute.surveys.pojo.PersonMatch;
-import org.kusalainstitute.surveys.pojo.enums.MatchType;
 
 /**
- * Data Access Object for PersonMatch entities.
+ * JDBI DAO interface for PersonMatch entities.
  */
-public class MatchDao extends BaseDao
+@RegisterBeanMapper(PersonMatch.class)
+public interface MatchDao
 {
-
-	private static final String INSERT_SQL = """
-		INSERT INTO person_match (cohort, pre_person_id, post_person_id, match_type, confidence, matched_at, matched_by, notes)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-		""";
-
-	private static final String SELECT_BY_PRE_PERSON_SQL = """
-		SELECT * FROM person_match WHERE pre_person_id = ?
-		""";
-
-	private static final String SELECT_BY_POST_PERSON_SQL = """
-		SELECT * FROM person_match WHERE post_person_id = ?
-		""";
-
-	private static final String SELECT_BY_COHORT_SQL = """
-		SELECT * FROM person_match WHERE cohort = ? ORDER BY matched_at
-		""";
-
-	private static final String SELECT_ALL_SQL = """
-		SELECT * FROM person_match ORDER BY cohort, matched_at
-		""";
-
-	private static final String EXISTS_SQL = """
-		SELECT 1 FROM person_match WHERE pre_person_id = ? AND post_person_id = ?
-		""";
 
 	/**
 	 * Inserts a new person match.
 	 *
 	 * @param match
 	 *            the match to insert
-	 * @return the inserted match with generated ID
-	 * @throws SQLException
-	 *             if insertion fails
+	 * @return the generated ID
 	 */
-	public PersonMatch insert(PersonMatch match) throws SQLException
-	{
-		try (Connection conn = getConnection();
-			PreparedStatement stmt = conn.prepareStatement(INSERT_SQL, Statement.RETURN_GENERATED_KEYS))
-		{
-
-			stmt.setString(1, match.getCohort());
-			stmt.setLong(2, match.getPrePersonId());
-			stmt.setLong(3, match.getPostPersonId());
-			stmt.setString(4, match.getMatchType().name());
-			setNullableBigDecimal(stmt, 5, match.getConfidence());
-			setNullableTimestamp(stmt, 6, match.getMatchedAt());
-			setNullableString(stmt, 7, match.getMatchedBy());
-			setNullableString(stmt, 8, match.getNotes());
-
-			stmt.executeUpdate();
-			match.setId(getGeneratedKey(stmt));
-
-			log.debug("Inserted person match: {}", match);
-			return match;
-		}
-	}
+	@SqlUpdate("""
+		INSERT INTO person_match (cohort, pre_person_id, post_person_id, match_type, confidence, matched_at, matched_by, notes)
+		VALUES (:cohort, :prePersonId, :postPersonId, :matchType, :confidence, :matchedAt, :matchedBy, :notes)
+		""")
+	@GetGeneratedKeys
+	long insert(@BindBean PersonMatch match);
 
 	/**
 	 * Finds a match by pre-survey person ID.
@@ -81,25 +38,9 @@ public class MatchDao extends BaseDao
 	 * @param prePersonId
 	 *            the pre-survey person ID
 	 * @return Optional containing the match if found
-	 * @throws SQLException
-	 *             if query fails
 	 */
-	public Optional<PersonMatch> findByPrePersonId(Long prePersonId) throws SQLException
-	{
-		try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(SELECT_BY_PRE_PERSON_SQL))
-		{
-
-			stmt.setLong(1, prePersonId);
-			try (ResultSet rs = stmt.executeQuery())
-			{
-				if (rs.next())
-				{
-					return Optional.of(mapResultSet(rs));
-				}
-			}
-		}
-		return Optional.empty();
-	}
+	@SqlQuery("SELECT * FROM person_match WHERE pre_person_id = :prePersonId")
+	Optional<PersonMatch> findByPrePersonId(@Bind("prePersonId") long prePersonId);
 
 	/**
 	 * Finds a match by post-survey person ID.
@@ -107,25 +48,9 @@ public class MatchDao extends BaseDao
 	 * @param postPersonId
 	 *            the post-survey person ID
 	 * @return Optional containing the match if found
-	 * @throws SQLException
-	 *             if query fails
 	 */
-	public Optional<PersonMatch> findByPostPersonId(Long postPersonId) throws SQLException
-	{
-		try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(SELECT_BY_POST_PERSON_SQL))
-		{
-
-			stmt.setLong(1, postPersonId);
-			try (ResultSet rs = stmt.executeQuery())
-			{
-				if (rs.next())
-				{
-					return Optional.of(mapResultSet(rs));
-				}
-			}
-		}
-		return Optional.empty();
-	}
+	@SqlQuery("SELECT * FROM person_match WHERE post_person_id = :postPersonId")
+	Optional<PersonMatch> findByPostPersonId(@Bind("postPersonId") long postPersonId);
 
 	/**
 	 * Finds all matches for a cohort.
@@ -133,49 +58,17 @@ public class MatchDao extends BaseDao
 	 * @param cohort
 	 *            the cohort code
 	 * @return list of matches in the cohort
-	 * @throws SQLException
-	 *             if query fails
 	 */
-	public List<PersonMatch> findByCohort(String cohort) throws SQLException
-	{
-		List<PersonMatch> result = new ArrayList<>();
-		try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(SELECT_BY_COHORT_SQL))
-		{
-
-			stmt.setString(1, cohort);
-			try (ResultSet rs = stmt.executeQuery())
-			{
-				while (rs.next())
-				{
-					result.add(mapResultSet(rs));
-				}
-			}
-		}
-		return result;
-	}
+	@SqlQuery("SELECT * FROM person_match WHERE cohort = :cohort ORDER BY matched_at")
+	List<PersonMatch> findByCohort(@Bind("cohort") String cohort);
 
 	/**
 	 * Finds all matches.
 	 *
 	 * @return list of all matches
-	 * @throws SQLException
-	 *             if query fails
 	 */
-	public List<PersonMatch> findAll() throws SQLException
-	{
-		List<PersonMatch> result = new ArrayList<>();
-		try (Connection conn = getConnection();
-			PreparedStatement stmt = conn.prepareStatement(SELECT_ALL_SQL);
-			ResultSet rs = stmt.executeQuery())
-		{
-
-			while (rs.next())
-			{
-				result.add(mapResultSet(rs));
-			}
-		}
-		return result;
-	}
+	@SqlQuery("SELECT * FROM person_match ORDER BY cohort, matched_at")
+	List<PersonMatch> findAll();
 
 	/**
 	 * Checks if a match already exists between two persons.
@@ -185,74 +78,56 @@ public class MatchDao extends BaseDao
 	 * @param postPersonId
 	 *            the post-survey person ID
 	 * @return true if match exists
-	 * @throws SQLException
-	 *             if query fails
 	 */
-	public boolean exists(Long prePersonId, Long postPersonId) throws SQLException
-	{
-		try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(EXISTS_SQL))
-		{
-
-			stmt.setLong(1, prePersonId);
-			stmt.setLong(2, postPersonId);
-			try (ResultSet rs = stmt.executeQuery())
-			{
-				return rs.next();
-			}
-		}
-	}
+	@SqlQuery("SELECT EXISTS(SELECT 1 FROM person_match WHERE pre_person_id = :prePersonId AND post_person_id = :postPersonId)")
+	boolean exists(@Bind("prePersonId") long prePersonId, @Bind("postPersonId") long postPersonId);
 
 	/**
-	 * Gets statistics about matches.
+	 * Gets the total number of matches.
+	 *
+	 * @return total matches
+	 */
+	@SqlQuery("SELECT COUNT(*) FROM person_match")
+	int countTotal();
+
+	/**
+	 * Gets the number of auto-email matches.
+	 *
+	 * @return auto-email match count
+	 */
+	@SqlQuery("SELECT COUNT(*) FROM person_match WHERE match_type = 'AUTO_EMAIL'")
+	int countAutoEmail();
+
+	/**
+	 * Gets the number of auto-name matches.
+	 *
+	 * @return auto-name match count
+	 */
+	@SqlQuery("SELECT COUNT(*) FROM person_match WHERE match_type = 'AUTO_NAME'")
+	int countAutoName();
+
+	/**
+	 * Gets the number of manual matches.
+	 *
+	 * @return manual match count
+	 */
+	@SqlQuery("SELECT COUNT(*) FROM person_match WHERE match_type = 'MANUAL'")
+	int countManual();
+
+	/**
+	 * Gets statistics about matches. This is a default method that combines the count queries.
 	 *
 	 * @return match statistics
-	 * @throws SQLException
-	 *             if query fails
 	 */
-	public MatchStatistics getStatistics() throws SQLException
+	default MatchStatistics getStatistics()
 	{
-		String sql = """
-			SELECT
-			    COUNT(*) as total_matches,
-			    SUM(CASE WHEN match_type = 'AUTO_EMAIL' THEN 1 ELSE 0 END) as auto_email_matches,
-			    SUM(CASE WHEN match_type = 'AUTO_NAME' THEN 1 ELSE 0 END) as auto_name_matches,
-			    SUM(CASE WHEN match_type = 'MANUAL' THEN 1 ELSE 0 END) as manual_matches
-			FROM person_match
-			""";
-
-		try (Connection conn = getConnection();
-			PreparedStatement stmt = conn.prepareStatement(sql);
-			ResultSet rs = stmt.executeQuery())
-		{
-
-			if (rs.next())
-			{
-				return new MatchStatistics(rs.getInt("total_matches"), rs.getInt("auto_email_matches"),
-					rs.getInt("auto_name_matches"), rs.getInt("manual_matches"));
-			}
-		}
-		return new MatchStatistics(0, 0, 0, 0);
-	}
-
-	private PersonMatch mapResultSet(ResultSet rs) throws SQLException
-	{
-		PersonMatch match = new PersonMatch();
-		match.setId(rs.getLong("id"));
-		match.setCohort(rs.getString("cohort"));
-		match.setPrePersonId(rs.getLong("pre_person_id"));
-		match.setPostPersonId(rs.getLong("post_person_id"));
-		match.setMatchType(MatchType.valueOf(rs.getString("match_type")));
-		match.setConfidence(rs.getBigDecimal("confidence"));
-		match.setMatchedAt(getNullableTimestamp(rs, "matched_at"));
-		match.setMatchedBy(getNullableString(rs, "matched_by"));
-		match.setNotes(getNullableString(rs, "notes"));
-		return match;
+		return new MatchStatistics(countTotal(), countAutoEmail(), countAutoName(), countManual());
 	}
 
 	/**
 	 * Statistics about person matches.
 	 */
-	public record MatchStatistics(int totalMatches, int autoEmailMatches, int autoNameMatches, int manualMatches)
+	record MatchStatistics(int totalMatches, int autoEmailMatches, int autoNameMatches, int manualMatches)
 	{
 	}
 }
