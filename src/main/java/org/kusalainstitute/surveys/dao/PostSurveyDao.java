@@ -19,7 +19,7 @@ public class PostSurveyDao extends BaseDao
 
 	private static final String INSERT_SQL = """
 		INSERT INTO post_survey_response (
-		    person_id, timestamp, source_file, row_number,
+		    person_id, timestamp, source_file, row_num,
 		    app_usage_duration, app_time_per_session, app_frequency, progress_assessment,
 		    what_helped_most_original, what_helped_most_translated,
 		    speak_directions, speak_healthcare, speak_authorities, speak_job_interview,
@@ -216,7 +216,7 @@ public class PostSurveyDao extends BaseDao
 		response.setPersonId(rs.getLong("person_id"));
 		response.setTimestamp(getNullableTimestamp(rs, "timestamp"));
 		response.setSourceFile(getNullableString(rs, "source_file"));
-		response.setRowNumber(getNullableInt(rs, "row_number"));
+		response.setRowNumber(getNullableInt(rs, "row_num"));
 
 		// App usage
 		response.setAppUsageDuration(getNullableString(rs, "app_usage_duration"));

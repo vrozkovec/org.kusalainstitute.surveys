@@ -19,7 +19,7 @@ public class PreSurveyDao extends BaseDao
 
 	private static final String INSERT_SQL = """
 		INSERT INTO pre_survey_response (
-		    person_id, timestamp, source_file, row_number,
+		    person_id, timestamp, source_file, row_num,
 		    how_found_kusala, study_with_teacher_duration, study_on_own_duration, children_ages,
 		    most_difficult_thing_original, most_difficult_thing_translated,
 		    why_improve_english_original, why_improve_english_translated,
@@ -216,7 +216,7 @@ public class PreSurveyDao extends BaseDao
 		response.setPersonId(rs.getLong("person_id"));
 		response.setTimestamp(getNullableTimestamp(rs, "timestamp"));
 		response.setSourceFile(getNullableString(rs, "source_file"));
-		response.setRowNumber(getNullableInt(rs, "row_number"));
+		response.setRowNumber(getNullableInt(rs, "row_num"));
 
 		// Demographics
 		response.setHowFoundKusala(getNullableString(rs, "how_found_kusala"));

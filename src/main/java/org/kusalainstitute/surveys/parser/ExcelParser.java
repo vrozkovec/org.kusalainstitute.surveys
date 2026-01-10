@@ -242,8 +242,7 @@ public abstract class ExcelParser
 		String secondCell = getStringValue(row, 1);
 
 		// Check for common header patterns
-		if (firstCell != null && (firstCell.toLowerCase().contains("column") || firstCell.toLowerCase().contains("pre")
-			|| firstCell.toLowerCase().contains("post")))
+		if (firstCell != null && (firstCell.toLowerCase().contains("column")))
 		{
 			return true;
 		}

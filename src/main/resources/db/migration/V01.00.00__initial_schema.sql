@@ -23,7 +23,7 @@ create table pre_survey_response (
     person_id bigint not null,
     timestamp datetime,
     source_file varchar(255),
-    row_number int,
+    row_num int,
 
     -- Demographics (Q1-Q6)
     how_found_kusala varchar(512),
@@ -88,7 +88,7 @@ create table post_survey_response (
     person_id bigint not null,
     timestamp datetime,
     source_file varchar(255),
-    row_number int,
+    row_num int,
 
     -- App usage Q1-Q4
     app_usage_duration varchar(255),
