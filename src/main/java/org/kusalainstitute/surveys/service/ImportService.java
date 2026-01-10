@@ -31,19 +31,23 @@ public class ImportService
 	private static final Logger LOG = LoggerFactory.getLogger(ImportService.class);
 
 	private final Jdbi jdbi;
+	private final TranslationService translationService;
 	private final PreSurveyParser preSurveyParser;
 	private final PostSurveyParser postSurveyParser;
 
 	/**
-	 * Creates a new ImportService with injected JDBI instance.
+	 * Creates a new ImportService with injected dependencies.
 	 *
 	 * @param jdbi
 	 *            the JDBI instance for database access
+	 * @param translationService
+	 *            the translation service for French to English translation
 	 */
 	@Inject
-	public ImportService(Jdbi jdbi)
+	public ImportService(Jdbi jdbi, TranslationService translationService)
 	{
 		this.jdbi = jdbi;
+		this.translationService = translationService;
 		this.preSurveyParser = new PreSurveyParser();
 		this.postSurveyParser = new PostSurveyParser();
 	}
@@ -86,6 +90,9 @@ public class ImportService
 						continue;
 					}
 
+					// Translate text fields before insert
+					translationService.translateAll(response);
+
 					// Insert person
 					long personId = personDao.insert(person);
 					person.setId(personId);
@@ -109,7 +116,7 @@ public class ImportService
 			return count;
 		});
 
-		LOG.info("Imported {} pre-survey records", imported);
+		LOG.info("Imported {} pre-survey records (cache size: {})", imported, translationService.getCacheSize());
 		return imported;
 	}
 
@@ -151,6 +158,9 @@ public class ImportService
 						continue;
 					}
 
+					// Translate text fields before insert
+					translationService.translateAll(response);
+
 					// Insert person
 					long personId = personDao.insert(person);
 					person.setId(personId);
@@ -174,7 +184,7 @@ public class ImportService
 			return count;
 		});
 
-		LOG.info("Imported {} post-survey records", imported);
+		LOG.info("Imported {} post-survey records (cache size: {})", imported, translationService.getCacheSize());
 		return imported;
 	}
 

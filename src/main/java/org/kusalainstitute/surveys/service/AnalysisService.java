@@ -16,6 +16,8 @@ import org.kusalainstitute.surveys.pojo.PersonMatch;
 import org.kusalainstitute.surveys.pojo.PostSurveyResponse;
 import org.kusalainstitute.surveys.pojo.PreSurveyResponse;
 import org.kusalainstitute.surveys.pojo.enums.SurveyType;
+import org.kusalainstitute.surveys.service.records.AnalysisResult;
+import org.kusalainstitute.surveys.service.records.MatchedPairAnalysis;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,19 +76,23 @@ public class AnalysisService
 			// Calculate post-survey averages
 			List<PostSurveyResponse> postResponses = postSurveyDao.findAll();
 			BigDecimal avgPostSpeaking = calculateAveragePostSpeaking(postResponses);
+			BigDecimal avgPostDifficulty = calculateAveragePostDifficulty(postResponses);
 
 			// Calculate matched pair changes
 			List<MatchedPairAnalysis> matchedAnalyses = analyzeMatchedPairs(matches, personDao, preSurveyDao, postSurveyDao);
-			BigDecimal avgConfidenceChange = calculateAverageConfidenceChange(matchedAnalyses);
+			BigDecimal avgSpeakingChange = calculateAverageSpeakingChange(matchedAnalyses);
+			BigDecimal avgUnderstandingChange = calculateAverageUnderstandingChange(matchedAnalyses);
 
 			// Get cohort breakdown
 			List<String> cohorts = personDao.findAllCohorts();
 
 			AnalysisResult result = new AnalysisResult(prePeople.size(), postPeople.size(), matches.size(), avgPreSpeaking,
-				avgPreUnderstanding, avgPostSpeaking, avgConfidenceChange, matchedAnalyses, cohorts);
+				avgPreUnderstanding, avgPostSpeaking, avgPostDifficulty, avgSpeakingChange, avgUnderstandingChange,
+				matchedAnalyses, cohorts);
 
-			LOG.info("Analysis complete: {} pre, {} post, {} matches, avg change: {}", result.preCount(), result.postCount(),
-				result.matchedCount(), result.avgConfidenceChange());
+			LOG.info("Analysis complete: {} pre, {} post, {} matches, avg speaking change: {}, avg understanding change: {}",
+				result.preCount(), result.postCount(), result.matchedCount(), result.avgSpeakingChange(),
+				result.avgUnderstandingChange());
 
 			return result;
 		});
@@ -120,19 +126,29 @@ public class AnalysisService
 				PreSurveyResponse pre = preOpt.get();
 				PostSurveyResponse post = postOpt.get();
 
+				// Pre Q7 (speaking confidence) vs Post Q6 (speaking ability)
 				BigDecimal preSpeaking = pre.getAvgSpeakingConfidence();
 				BigDecimal postSpeaking = post.getAvgSpeakingAbility();
-
-				BigDecimal change = null;
+				BigDecimal speakingChange = null;
 				if (preSpeaking != null && postSpeaking != null)
 				{
-					change = postSpeaking.subtract(preSpeaking);
+					speakingChange = postSpeaking.subtract(preSpeaking);
+				}
+
+				// Pre Q9 (understanding confidence) vs Post Q7 (difficulty expressing)
+				BigDecimal preUnderstanding = pre.getAvgUnderstandingConfidence();
+				BigDecimal postDifficulty = post.getAvgDifficultyExpressing();
+				BigDecimal understandingChange = null;
+				if (preUnderstanding != null && postDifficulty != null)
+				{
+					understandingChange = postDifficulty.subtract(preUnderstanding);
 				}
 
 				Person prePerson = personDao.findById(match.getPrePersonId()).orElse(null);
 
 				results.add(new MatchedPairAnalysis(match.getCohort(), prePerson != null ? prePerson.getName() : "Unknown",
-					preSpeaking, pre.getAvgUnderstandingConfidence(), postSpeaking, change, match.getMatchType().name()));
+					preSpeaking, preUnderstanding, postSpeaking, postDifficulty, speakingChange, understandingChange,
+					match.getMatchType().name()));
 			}
 		}
 
@@ -163,9 +179,17 @@ public class AnalysisService
 				RoundingMode.HALF_UP);
 	}
 
-	private BigDecimal calculateAverageConfidenceChange(List<MatchedPairAnalysis> analyses)
+	private BigDecimal calculateAveragePostDifficulty(List<PostSurveyResponse> responses)
 	{
-		List<BigDecimal> changes = analyses.stream().map(MatchedPairAnalysis::confidenceChange).filter(v -> v != null).toList();
+		return responses.stream().map(PostSurveyResponse::getAvgDifficultyExpressing).filter(v -> v != null)
+			.reduce(BigDecimal.ZERO, BigDecimal::add)
+			.divide(BigDecimal.valueOf(Math.max(1, responses.stream().filter(r -> r.getAvgDifficultyExpressing() != null).count())),
+				2, RoundingMode.HALF_UP);
+	}
+
+	private BigDecimal calculateAverageSpeakingChange(List<MatchedPairAnalysis> analyses)
+	{
+		List<BigDecimal> changes = analyses.stream().map(MatchedPairAnalysis::speakingChange).filter(v -> v != null).toList();
 
 		if (changes.isEmpty())
 		{
@@ -176,20 +200,16 @@ public class AnalysisService
 			RoundingMode.HALF_UP);
 	}
 
-	/**
-	 * Analysis result container.
-	 */
-	public record AnalysisResult(int preCount, int postCount, int matchedCount, BigDecimal avgPreSpeaking,
-		BigDecimal avgPreUnderstanding, BigDecimal avgPostSpeaking, BigDecimal avgConfidenceChange,
-		List<MatchedPairAnalysis> matchedPairAnalyses, List<String> cohorts)
+	private BigDecimal calculateAverageUnderstandingChange(List<MatchedPairAnalysis> analyses)
 	{
-	}
+		List<BigDecimal> changes = analyses.stream().map(MatchedPairAnalysis::understandingChange).filter(v -> v != null).toList();
 
-	/**
-	 * Analysis of a single matched pair.
-	 */
-	public record MatchedPairAnalysis(String cohort, String name, BigDecimal preSpeakingConfidence,
-		BigDecimal preUnderstandingConfidence, BigDecimal postSpeakingAbility, BigDecimal confidenceChange, String matchType)
-	{
+		if (changes.isEmpty())
+		{
+			return BigDecimal.ZERO;
+		}
+
+		return changes.stream().reduce(BigDecimal.ZERO, BigDecimal::add).divide(BigDecimal.valueOf(changes.size()), 2,
+			RoundingMode.HALF_UP);
 	}
 }

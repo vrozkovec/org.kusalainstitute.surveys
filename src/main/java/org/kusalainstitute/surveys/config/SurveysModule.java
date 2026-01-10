@@ -10,6 +10,8 @@ import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.kusalainstitute.surveys.service.AnalysisService;
 import org.kusalainstitute.surveys.service.ImportService;
 import org.kusalainstitute.surveys.service.MatchingService;
+import org.kusalainstitute.surveys.service.TranslationService;
+import org.kusalainstitute.surveys.utils.translations.deepl.RetrofitDeeplModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,10 +34,14 @@ public class SurveysModule extends AbstractModule
 	@Override
 	protected void configure()
 	{
+		// Install DeepL translation module
+		install(new RetrofitDeeplModule());
+
 		// Bind configuration
 		bind(SurveysDatabaseConfig.class).in(Singleton.class);
 
 		// Bind services
+		bind(TranslationService.class).in(Singleton.class);
 		bind(ImportService.class).in(Singleton.class);
 		bind(MatchingService.class).in(Singleton.class);
 		bind(AnalysisService.class).in(Singleton.class);

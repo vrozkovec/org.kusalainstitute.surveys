@@ -165,18 +165,18 @@ public class PostSurveyParser extends ExcelParser
 		response.setSpeakSupportOrgs(getConfidenceValue(row, COL_SPEAK_START + 9));
 		response.setSpeakShopping(getConfidenceValue(row, COL_SPEAK_START + 10));
 
-		// Difficulty expressing (Q7) - 11 free-text fields
-		response.setDifficultyDirectionsOriginal(getStringValue(row, COL_DIFFICULTY_START));
-		response.setDifficultyHealthcareOriginal(getStringValue(row, COL_DIFFICULTY_START + 1));
-		response.setDifficultyAuthoritiesOriginal(getStringValue(row, COL_DIFFICULTY_START + 2));
-		response.setDifficultyJobInterviewOriginal(getStringValue(row, COL_DIFFICULTY_START + 3));
-		response.setDifficultyInformalOriginal(getStringValue(row, COL_DIFFICULTY_START + 4));
-		response.setDifficultyChildrenEducationOriginal(getStringValue(row, COL_DIFFICULTY_START + 5));
-		response.setDifficultyLandlordOriginal(getStringValue(row, COL_DIFFICULTY_START + 6));
-		response.setDifficultySocialEventsOriginal(getStringValue(row, COL_DIFFICULTY_START + 7));
-		response.setDifficultyLocalServicesOriginal(getStringValue(row, COL_DIFFICULTY_START + 8));
-		response.setDifficultySupportOrgsOriginal(getStringValue(row, COL_DIFFICULTY_START + 9));
-		response.setDifficultyShoppingOriginal(getStringValue(row, COL_DIFFICULTY_START + 10));
+		// Difficulty expressing (Q7) - 11 situations, 1-5 scale
+		response.setDifficultyDirections(getConfidenceValue(row, COL_DIFFICULTY_START));
+		response.setDifficultyHealthcare(getConfidenceValue(row, COL_DIFFICULTY_START + 1));
+		response.setDifficultyAuthorities(getConfidenceValue(row, COL_DIFFICULTY_START + 2));
+		response.setDifficultyJobInterview(getConfidenceValue(row, COL_DIFFICULTY_START + 3));
+		response.setDifficultyInformal(getConfidenceValue(row, COL_DIFFICULTY_START + 4));
+		response.setDifficultyChildrenEducation(getConfidenceValue(row, COL_DIFFICULTY_START + 5));
+		response.setDifficultyLandlord(getConfidenceValue(row, COL_DIFFICULTY_START + 6));
+		response.setDifficultySocialEvents(getConfidenceValue(row, COL_DIFFICULTY_START + 7));
+		response.setDifficultyLocalServices(getConfidenceValue(row, COL_DIFFICULTY_START + 8));
+		response.setDifficultySupportOrgs(getConfidenceValue(row, COL_DIFFICULTY_START + 9));
+		response.setDifficultyShopping(getConfidenceValue(row, COL_DIFFICULTY_START + 10));
 
 		// Remaining questions Q8-Q17
 		response.setMostDifficultOverallOriginal(getStringValue(row, COL_DIFFICULT_OVERALL));

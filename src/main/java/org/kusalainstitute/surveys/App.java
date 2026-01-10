@@ -12,9 +12,9 @@ import org.kusalainstitute.surveys.config.SurveysModule;
 import org.kusalainstitute.surveys.dao.MatchDao;
 import org.kusalainstitute.surveys.pojo.Person;
 import org.kusalainstitute.surveys.service.AnalysisService;
-import org.kusalainstitute.surveys.service.AnalysisService.AnalysisResult;
 import org.kusalainstitute.surveys.service.ImportService;
 import org.kusalainstitute.surveys.service.MatchingService;
+import org.kusalainstitute.surveys.service.records.AnalysisResult;
 
 import com.google.inject.Guice;
 import com.google.inject.Inject;
@@ -388,22 +388,25 @@ public class App implements Callable<Integer>
 			System.out.println("  Speaking confidence: " + result.avgPreSpeaking());
 			System.out.println("  Understanding confidence: " + result.avgPreUnderstanding());
 			System.out.println();
-			System.out.println("Post-Survey Averages (1-4 scale):");
+			System.out.println("Post-Survey Averages (1-5 scale):");
 			System.out.println("  Speaking ability: " + result.avgPostSpeaking());
+			System.out.println("  Difficulty expressing: " + result.avgPostDifficulty());
 			System.out.println();
 			System.out.println("Matched Pair Analysis:");
-			System.out.println("  Average confidence change: " + result.avgConfidenceChange());
+			System.out.println("  Average speaking change (Pre Q7 vs Post Q6): " + result.avgSpeakingChange());
+			System.out.println("  Average understanding change (Pre Q9 vs Post Q7): " + result.avgUnderstandingChange());
 			System.out.println();
 
 			if (!result.matchedPairAnalyses().isEmpty())
 			{
 				System.out.println("Individual Matched Pairs:");
-				System.out.println("Cohort | Name | Pre Speaking | Post Speaking | Change");
-				System.out.println("-".repeat(70));
+				System.out.println("Cohort | Name | Pre Speaking | Post Speaking | Speaking Change | Understanding Change");
+				System.out.println("-".repeat(90));
 				for (var analysis : result.matchedPairAnalyses())
 				{
-					System.out.printf("%s | %s | %s | %s | %s%n", analysis.cohort(), truncate(analysis.name(), 20),
-						analysis.preSpeakingConfidence(), analysis.postSpeakingAbility(), analysis.confidenceChange());
+					System.out.printf("%s | %s | %s | %s | %s | %s%n", analysis.cohort(), truncate(analysis.name(), 20),
+						analysis.preSpeakingConfidence(), analysis.postSpeakingAbility(), analysis.speakingChange(),
+						analysis.understandingChange());
 				}
 			}
 

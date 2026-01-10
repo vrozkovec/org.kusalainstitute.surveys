@@ -34,17 +34,10 @@ public interface PostSurveyDao
 		    speak_directions, speak_healthcare, speak_authorities, speak_job_interview,
 		    speak_informal, speak_children_education, speak_landlord, speak_social_events,
 		    speak_local_services, speak_support_orgs, speak_shopping,
-		    difficulty_directions_original, difficulty_directions_translated,
-		    difficulty_healthcare_original, difficulty_healthcare_translated,
-		    difficulty_authorities_original, difficulty_authorities_translated,
-		    difficulty_job_interview_original, difficulty_job_interview_translated,
-		    difficulty_informal_original, difficulty_informal_translated,
-		    difficulty_children_education_original, difficulty_children_education_translated,
-		    difficulty_landlord_original, difficulty_landlord_translated,
-		    difficulty_social_events_original, difficulty_social_events_translated,
-		    difficulty_local_services_original, difficulty_local_services_translated,
-		    difficulty_support_orgs_original, difficulty_support_orgs_translated,
-		    difficulty_shopping_original, difficulty_shopping_translated,
+		    difficulty_directions, difficulty_healthcare, difficulty_authorities,
+		    difficulty_job_interview, difficulty_informal, difficulty_children_education,
+		    difficulty_landlord, difficulty_social_events, difficulty_local_services,
+		    difficulty_support_orgs, difficulty_shopping,
 		    most_difficult_overall_original, most_difficult_overall_translated,
 		    most_difficult_for_job_original, most_difficult_for_job_translated,
 		    emotional_difficulties_original, emotional_difficulties_translated,
@@ -54,7 +47,7 @@ public interface PostSurveyDao
 		    willing_to_interview, interview_decline_reason_original, interview_decline_reason_translated,
 		    preferred_interview_type, contact_info,
 		    additional_comments_original, additional_comments_translated,
-		    avg_speaking_ability
+		    avg_speaking_ability, avg_difficulty_expressing
 		) VALUES (
 		    :personId, :timestamp, :sourceFile, :rowNumber,
 		    :appUsageDuration, :appTimePerSession, :appFrequency, :progressAssessment,
@@ -62,17 +55,10 @@ public interface PostSurveyDao
 		    :speakDirections, :speakHealthcare, :speakAuthorities, :speakJobInterview,
 		    :speakInformal, :speakChildrenEducation, :speakLandlord, :speakSocialEvents,
 		    :speakLocalServices, :speakSupportOrgs, :speakShopping,
-		    :difficultyDirectionsOriginal, :difficultyDirectionsTranslated,
-		    :difficultyHealthcareOriginal, :difficultyHealthcareTranslated,
-		    :difficultyAuthoritiesOriginal, :difficultyAuthoritiesTranslated,
-		    :difficultyJobInterviewOriginal, :difficultyJobInterviewTranslated,
-		    :difficultyInformalOriginal, :difficultyInformalTranslated,
-		    :difficultyChildrenEducationOriginal, :difficultyChildrenEducationTranslated,
-		    :difficultyLandlordOriginal, :difficultyLandlordTranslated,
-		    :difficultySocialEventsOriginal, :difficultySocialEventsTranslated,
-		    :difficultyLocalServicesOriginal, :difficultyLocalServicesTranslated,
-		    :difficultySupportOrgsOriginal, :difficultySupportOrgsTranslated,
-		    :difficultyShoppingOriginal, :difficultyShoppingTranslated,
+		    :difficultyDirections, :difficultyHealthcare, :difficultyAuthorities,
+		    :difficultyJobInterview, :difficultyInformal, :difficultyChildrenEducation,
+		    :difficultyLandlord, :difficultySocialEvents, :difficultyLocalServices,
+		    :difficultySupportOrgs, :difficultyShopping,
 		    :mostDifficultOverallOriginal, :mostDifficultOverallTranslated,
 		    :mostDifficultForJobOriginal, :mostDifficultForJobTranslated,
 		    :emotionalDifficultiesOriginal, :emotionalDifficultiesTranslated,
@@ -82,7 +68,7 @@ public interface PostSurveyDao
 		    :willingToInterview, :interviewDeclineReasonOriginal, :interviewDeclineReasonTranslated,
 		    :preferredInterviewType, :contactInfo,
 		    :additionalCommentsOriginal, :additionalCommentsTranslated,
-		    :avgSpeakingAbility
+		    :avgSpeakingAbility, :avgDifficultyExpressing
 		)
 		""")
 	@GetGeneratedKeys

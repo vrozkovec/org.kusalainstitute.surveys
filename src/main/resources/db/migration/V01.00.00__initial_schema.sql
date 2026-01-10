@@ -113,29 +113,18 @@ create table post_survey_response (
     speak_support_orgs int,
     speak_shopping int,
 
-    -- Q7 Difficulty expressing (11 free-text fields) - original and translated
-    difficulty_directions_original text,
-    difficulty_directions_translated text,
-    difficulty_healthcare_original text,
-    difficulty_healthcare_translated text,
-    difficulty_authorities_original text,
-    difficulty_authorities_translated text,
-    difficulty_job_interview_original text,
-    difficulty_job_interview_translated text,
-    difficulty_informal_original text,
-    difficulty_informal_translated text,
-    difficulty_children_education_original text,
-    difficulty_children_education_translated text,
-    difficulty_landlord_original text,
-    difficulty_landlord_translated text,
-    difficulty_social_events_original text,
-    difficulty_social_events_translated text,
-    difficulty_local_services_original text,
-    difficulty_local_services_translated text,
-    difficulty_support_orgs_original text,
-    difficulty_support_orgs_translated text,
-    difficulty_shopping_original text,
-    difficulty_shopping_translated text,
+    -- Q7 Difficulty expressing (11 situations) - 1-5 scale
+    difficulty_directions int comment '1-5 difficulty scale',
+    difficulty_healthcare int,
+    difficulty_authorities int,
+    difficulty_job_interview int,
+    difficulty_informal int,
+    difficulty_children_education int,
+    difficulty_landlord int,
+    difficulty_social_events int,
+    difficulty_local_services int,
+    difficulty_support_orgs int,
+    difficulty_shopping int,
 
     -- Q8 Free text
     most_difficult_overall_original text,
@@ -171,8 +160,9 @@ create table post_survey_response (
     additional_comments_original text,
     additional_comments_translated text,
 
-    -- Calculated average
+    -- Calculated averages
     avg_speaking_ability decimal(5,2),
+    avg_difficulty_expressing decimal(5,2),
 
     primary key (id),
     constraint fk_post_survey_person foreign key (person_id) references person(id),

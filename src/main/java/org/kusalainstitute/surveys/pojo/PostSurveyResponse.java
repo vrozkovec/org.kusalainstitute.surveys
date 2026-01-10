@@ -41,29 +41,18 @@ public class PostSurveyResponse
 	private Integer speakSupportOrgs;
 	private Integer speakShopping;
 
-	// Q7 Difficulty expressing (11 free-text fields)
-	private String difficultyDirectionsOriginal;
-	private String difficultyDirectionsTranslated;
-	private String difficultyHealthcareOriginal;
-	private String difficultyHealthcareTranslated;
-	private String difficultyAuthoritiesOriginal;
-	private String difficultyAuthoritiesTranslated;
-	private String difficultyJobInterviewOriginal;
-	private String difficultyJobInterviewTranslated;
-	private String difficultyInformalOriginal;
-	private String difficultyInformalTranslated;
-	private String difficultyChildrenEducationOriginal;
-	private String difficultyChildrenEducationTranslated;
-	private String difficultyLandlordOriginal;
-	private String difficultyLandlordTranslated;
-	private String difficultySocialEventsOriginal;
-	private String difficultySocialEventsTranslated;
-	private String difficultyLocalServicesOriginal;
-	private String difficultyLocalServicesTranslated;
-	private String difficultySupportOrgsOriginal;
-	private String difficultySupportOrgsTranslated;
-	private String difficultyShoppingOriginal;
-	private String difficultyShoppingTranslated;
+	// Q7 Difficulty expressing (11 situations) - 1-5 scale
+	private Integer difficultyDirections;
+	private Integer difficultyHealthcare;
+	private Integer difficultyAuthorities;
+	private Integer difficultyJobInterview;
+	private Integer difficultyInformal;
+	private Integer difficultyChildrenEducation;
+	private Integer difficultyLandlord;
+	private Integer difficultySocialEvents;
+	private Integer difficultyLocalServices;
+	private Integer difficultySupportOrgs;
+	private Integer difficultyShopping;
 
 	// Q8 Free text
 	private String mostDifficultOverallOriginal;
@@ -99,19 +88,21 @@ public class PostSurveyResponse
 	private String additionalCommentsOriginal;
 	private String additionalCommentsTranslated;
 
-	// Calculated average
+	// Calculated averages
 	private BigDecimal avgSpeakingAbility;
+	private BigDecimal avgDifficultyExpressing;
 
 	public PostSurveyResponse()
 	{
 	}
 
 	/**
-	 * Calculates and sets the average speaking ability from all 11 situations.
+	 * Calculates and sets the average speaking ability and difficulty expressing from all 11 situations.
 	 */
 	public void calculateAverages()
 	{
 		this.avgSpeakingAbility = calculateSpeakingAverage();
+		this.avgDifficultyExpressing = calculateDifficultyAverage();
 	}
 
 	/**
@@ -126,6 +117,37 @@ public class PostSurveyResponse
 
 		Integer[] values = { speakDirections, speakHealthcare, speakAuthorities, speakJobInterview, speakInformal,
 				speakChildrenEducation, speakLandlord, speakSocialEvents, speakLocalServices, speakSupportOrgs, speakShopping };
+
+		for (Integer value : values)
+		{
+			if (value != null)
+			{
+				sum += value;
+				count++;
+			}
+		}
+
+		if (count == 0)
+		{
+			return null;
+		}
+
+		return BigDecimal.valueOf(sum).divide(BigDecimal.valueOf(count), 2, RoundingMode.HALF_UP);
+	}
+
+	/**
+	 * Calculates the average difficulty expressing.
+	 *
+	 * @return average of all non-null difficulty expressing values, or null if all are null
+	 */
+	public BigDecimal calculateDifficultyAverage()
+	{
+		int sum = 0;
+		int count = 0;
+
+		Integer[] values = { difficultyDirections, difficultyHealthcare, difficultyAuthorities, difficultyJobInterview,
+				difficultyInformal, difficultyChildrenEducation, difficultyLandlord, difficultySocialEvents,
+				difficultyLocalServices, difficultySupportOrgs, difficultyShopping };
 
 		for (Integer value : values)
 		{
@@ -366,224 +388,114 @@ public class PostSurveyResponse
 		this.speakShopping = speakShopping;
 	}
 
-	public String getDifficultyDirectionsOriginal()
+	public Integer getDifficultyDirections()
 	{
-		return difficultyDirectionsOriginal;
+		return difficultyDirections;
 	}
 
-	public void setDifficultyDirectionsOriginal(String difficultyDirectionsOriginal)
+	public void setDifficultyDirections(Integer difficultyDirections)
 	{
-		this.difficultyDirectionsOriginal = difficultyDirectionsOriginal;
+		this.difficultyDirections = difficultyDirections;
 	}
 
-	public String getDifficultyDirectionsTranslated()
+	public Integer getDifficultyHealthcare()
 	{
-		return difficultyDirectionsTranslated;
+		return difficultyHealthcare;
 	}
 
-	public void setDifficultyDirectionsTranslated(String difficultyDirectionsTranslated)
+	public void setDifficultyHealthcare(Integer difficultyHealthcare)
 	{
-		this.difficultyDirectionsTranslated = difficultyDirectionsTranslated;
+		this.difficultyHealthcare = difficultyHealthcare;
 	}
 
-	public String getDifficultyHealthcareOriginal()
+	public Integer getDifficultyAuthorities()
 	{
-		return difficultyHealthcareOriginal;
+		return difficultyAuthorities;
 	}
 
-	public void setDifficultyHealthcareOriginal(String difficultyHealthcareOriginal)
+	public void setDifficultyAuthorities(Integer difficultyAuthorities)
 	{
-		this.difficultyHealthcareOriginal = difficultyHealthcareOriginal;
+		this.difficultyAuthorities = difficultyAuthorities;
 	}
 
-	public String getDifficultyHealthcareTranslated()
+	public Integer getDifficultyJobInterview()
 	{
-		return difficultyHealthcareTranslated;
+		return difficultyJobInterview;
 	}
 
-	public void setDifficultyHealthcareTranslated(String difficultyHealthcareTranslated)
+	public void setDifficultyJobInterview(Integer difficultyJobInterview)
 	{
-		this.difficultyHealthcareTranslated = difficultyHealthcareTranslated;
+		this.difficultyJobInterview = difficultyJobInterview;
 	}
 
-	public String getDifficultyAuthoritiesOriginal()
+	public Integer getDifficultyInformal()
 	{
-		return difficultyAuthoritiesOriginal;
+		return difficultyInformal;
 	}
 
-	public void setDifficultyAuthoritiesOriginal(String difficultyAuthoritiesOriginal)
+	public void setDifficultyInformal(Integer difficultyInformal)
 	{
-		this.difficultyAuthoritiesOriginal = difficultyAuthoritiesOriginal;
+		this.difficultyInformal = difficultyInformal;
 	}
 
-	public String getDifficultyAuthoritiesTranslated()
+	public Integer getDifficultyChildrenEducation()
 	{
-		return difficultyAuthoritiesTranslated;
+		return difficultyChildrenEducation;
 	}
 
-	public void setDifficultyAuthoritiesTranslated(String difficultyAuthoritiesTranslated)
+	public void setDifficultyChildrenEducation(Integer difficultyChildrenEducation)
 	{
-		this.difficultyAuthoritiesTranslated = difficultyAuthoritiesTranslated;
+		this.difficultyChildrenEducation = difficultyChildrenEducation;
 	}
 
-	public String getDifficultyJobInterviewOriginal()
+	public Integer getDifficultyLandlord()
 	{
-		return difficultyJobInterviewOriginal;
+		return difficultyLandlord;
 	}
 
-	public void setDifficultyJobInterviewOriginal(String difficultyJobInterviewOriginal)
+	public void setDifficultyLandlord(Integer difficultyLandlord)
 	{
-		this.difficultyJobInterviewOriginal = difficultyJobInterviewOriginal;
+		this.difficultyLandlord = difficultyLandlord;
 	}
 
-	public String getDifficultyJobInterviewTranslated()
+	public Integer getDifficultySocialEvents()
 	{
-		return difficultyJobInterviewTranslated;
+		return difficultySocialEvents;
 	}
 
-	public void setDifficultyJobInterviewTranslated(String difficultyJobInterviewTranslated)
+	public void setDifficultySocialEvents(Integer difficultySocialEvents)
 	{
-		this.difficultyJobInterviewTranslated = difficultyJobInterviewTranslated;
+		this.difficultySocialEvents = difficultySocialEvents;
 	}
 
-	public String getDifficultyInformalOriginal()
+	public Integer getDifficultyLocalServices()
 	{
-		return difficultyInformalOriginal;
+		return difficultyLocalServices;
 	}
 
-	public void setDifficultyInformalOriginal(String difficultyInformalOriginal)
+	public void setDifficultyLocalServices(Integer difficultyLocalServices)
 	{
-		this.difficultyInformalOriginal = difficultyInformalOriginal;
+		this.difficultyLocalServices = difficultyLocalServices;
 	}
 
-	public String getDifficultyInformalTranslated()
+	public Integer getDifficultySupportOrgs()
 	{
-		return difficultyInformalTranslated;
+		return difficultySupportOrgs;
 	}
 
-	public void setDifficultyInformalTranslated(String difficultyInformalTranslated)
+	public void setDifficultySupportOrgs(Integer difficultySupportOrgs)
 	{
-		this.difficultyInformalTranslated = difficultyInformalTranslated;
+		this.difficultySupportOrgs = difficultySupportOrgs;
 	}
 
-	public String getDifficultyChildrenEducationOriginal()
+	public Integer getDifficultyShopping()
 	{
-		return difficultyChildrenEducationOriginal;
+		return difficultyShopping;
 	}
 
-	public void setDifficultyChildrenEducationOriginal(String difficultyChildrenEducationOriginal)
+	public void setDifficultyShopping(Integer difficultyShopping)
 	{
-		this.difficultyChildrenEducationOriginal = difficultyChildrenEducationOriginal;
-	}
-
-	public String getDifficultyChildrenEducationTranslated()
-	{
-		return difficultyChildrenEducationTranslated;
-	}
-
-	public void setDifficultyChildrenEducationTranslated(String difficultyChildrenEducationTranslated)
-	{
-		this.difficultyChildrenEducationTranslated = difficultyChildrenEducationTranslated;
-	}
-
-	public String getDifficultyLandlordOriginal()
-	{
-		return difficultyLandlordOriginal;
-	}
-
-	public void setDifficultyLandlordOriginal(String difficultyLandlordOriginal)
-	{
-		this.difficultyLandlordOriginal = difficultyLandlordOriginal;
-	}
-
-	public String getDifficultyLandlordTranslated()
-	{
-		return difficultyLandlordTranslated;
-	}
-
-	public void setDifficultyLandlordTranslated(String difficultyLandlordTranslated)
-	{
-		this.difficultyLandlordTranslated = difficultyLandlordTranslated;
-	}
-
-	public String getDifficultySocialEventsOriginal()
-	{
-		return difficultySocialEventsOriginal;
-	}
-
-	public void setDifficultySocialEventsOriginal(String difficultySocialEventsOriginal)
-	{
-		this.difficultySocialEventsOriginal = difficultySocialEventsOriginal;
-	}
-
-	public String getDifficultySocialEventsTranslated()
-	{
-		return difficultySocialEventsTranslated;
-	}
-
-	public void setDifficultySocialEventsTranslated(String difficultySocialEventsTranslated)
-	{
-		this.difficultySocialEventsTranslated = difficultySocialEventsTranslated;
-	}
-
-	public String getDifficultyLocalServicesOriginal()
-	{
-		return difficultyLocalServicesOriginal;
-	}
-
-	public void setDifficultyLocalServicesOriginal(String difficultyLocalServicesOriginal)
-	{
-		this.difficultyLocalServicesOriginal = difficultyLocalServicesOriginal;
-	}
-
-	public String getDifficultyLocalServicesTranslated()
-	{
-		return difficultyLocalServicesTranslated;
-	}
-
-	public void setDifficultyLocalServicesTranslated(String difficultyLocalServicesTranslated)
-	{
-		this.difficultyLocalServicesTranslated = difficultyLocalServicesTranslated;
-	}
-
-	public String getDifficultySupportOrgsOriginal()
-	{
-		return difficultySupportOrgsOriginal;
-	}
-
-	public void setDifficultySupportOrgsOriginal(String difficultySupportOrgsOriginal)
-	{
-		this.difficultySupportOrgsOriginal = difficultySupportOrgsOriginal;
-	}
-
-	public String getDifficultySupportOrgsTranslated()
-	{
-		return difficultySupportOrgsTranslated;
-	}
-
-	public void setDifficultySupportOrgsTranslated(String difficultySupportOrgsTranslated)
-	{
-		this.difficultySupportOrgsTranslated = difficultySupportOrgsTranslated;
-	}
-
-	public String getDifficultyShoppingOriginal()
-	{
-		return difficultyShoppingOriginal;
-	}
-
-	public void setDifficultyShoppingOriginal(String difficultyShoppingOriginal)
-	{
-		this.difficultyShoppingOriginal = difficultyShoppingOriginal;
-	}
-
-	public String getDifficultyShoppingTranslated()
-	{
-		return difficultyShoppingTranslated;
-	}
-
-	public void setDifficultyShoppingTranslated(String difficultyShoppingTranslated)
-	{
-		this.difficultyShoppingTranslated = difficultyShoppingTranslated;
+		this.difficultyShopping = difficultyShopping;
 	}
 
 	public String getMostDifficultOverallOriginal()
@@ -774,6 +686,16 @@ public class PostSurveyResponse
 	public void setAvgSpeakingAbility(BigDecimal avgSpeakingAbility)
 	{
 		this.avgSpeakingAbility = avgSpeakingAbility;
+	}
+
+	public BigDecimal getAvgDifficultyExpressing()
+	{
+		return avgDifficultyExpressing;
+	}
+
+	public void setAvgDifficultyExpressing(BigDecimal avgDifficultyExpressing)
+	{
+		this.avgDifficultyExpressing = avgDifficultyExpressing;
 	}
 
 	@Override
