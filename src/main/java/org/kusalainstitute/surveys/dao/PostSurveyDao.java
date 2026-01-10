@@ -1,5 +1,6 @@
 package org.kusalainstitute.surveys.dao;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -104,4 +105,29 @@ public interface PostSurveyDao
 	 */
 	@SqlQuery("SELECT * FROM post_survey_response ORDER BY id")
 	List<PostSurveyResponse> findAll();
+
+	/**
+	 * Checks if a post-survey response already exists for the given cohort, timestamp, and name or
+	 * email combination.
+	 *
+	 * @param cohort
+	 *            the cohort code
+	 * @param timestamp
+	 *            the survey response timestamp
+	 * @param name
+	 *            the respondent's name
+	 * @param normalizedEmail
+	 *            the normalized email address
+	 * @return true if a matching record exists
+	 */
+	@SqlQuery("""
+		SELECT EXISTS(
+		    SELECT 1 FROM post_survey_response r
+		    JOIN person p ON r.person_id = p.id
+		    WHERE p.cohort = :cohort
+		    AND r.timestamp = :timestamp
+		    AND (p.name = :name OR p.normalized_email = :normalizedEmail)
+		)
+		""")
+	boolean exists(String cohort, LocalDateTime timestamp, String name, String normalizedEmail);
 }

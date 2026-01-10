@@ -4,8 +4,8 @@ import java.util.List;
 
 import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Jdbi;
-import org.jdbi.v3.core.mapper.reflect.ColumnNameMatcher;
 import org.jdbi.v3.core.mapper.reflect.ReflectionMappers;
+import org.jdbi.v3.core.mapper.reflect.SnakeCaseColumnNameMatcher;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.kusalainstitute.surveys.service.AnalysisService;
 import org.kusalainstitute.surveys.service.ImportService;
@@ -115,54 +115,5 @@ public class SurveysModule extends AbstractModule
 	public Flyway provideFlyway(HikariDataSource dataSource)
 	{
 		return Flyway.configure().dataSource(dataSource).locations("classpath:db/migration").baselineOnMigrate(true).load();
-	}
-
-	/**
-	 * Column name matcher that converts snake_case database columns to camelCase Java properties.
-	 */
-	private static class SnakeCaseColumnNameMatcher implements ColumnNameMatcher
-	{
-
-		@Override
-		public boolean columnNameMatches(String columnName, String javaName)
-		{
-			// Convert snake_case to camelCase and compare
-			String converted = snakeToCamel(columnName);
-			return converted.equalsIgnoreCase(javaName);
-		}
-
-		@Override
-		public boolean columnNameStartsWith(String columnName, String prefix)
-		{
-			String converted = snakeToCamel(columnName);
-			return converted.toLowerCase().startsWith(prefix.toLowerCase());
-		}
-
-		private String snakeToCamel(String snake)
-		{
-			if (snake == null || snake.isEmpty())
-			{
-				return snake;
-			}
-			StringBuilder result = new StringBuilder();
-			boolean capitalizeNext = false;
-			for (char c : snake.toCharArray())
-			{
-				if (c == '_')
-				{
-					capitalizeNext = true;
-				}
-				else if (capitalizeNext)
-				{
-					result.append(Character.toUpperCase(c));
-					capitalizeNext = false;
-				}
-				else
-				{
-					result.append(Character.toLowerCase(c));
-				}
-			}
-			return result.toString();
-		}
 	}
 }

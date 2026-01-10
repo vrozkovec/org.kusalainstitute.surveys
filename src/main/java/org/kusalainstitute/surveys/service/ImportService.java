@@ -68,17 +68,29 @@ public class ImportService
 			PreSurveyDao preSurveyDao = handle.attach(PreSurveyDao.class);
 
 			int count = 0;
+			int skipped = 0;
 			for (ParsedPreSurvey p : parsed)
 			{
 				try
 				{
-					// Insert person
 					Person person = p.person();
+					PreSurveyResponse response = p.response();
+
+					// Check if record already exists (idempotent import)
+					if (preSurveyDao.exists(person.getCohort(), response.getTimestamp(),
+						person.getName(), person.getNormalizedEmail()))
+					{
+						skipped++;
+						LOG.debug("Skipping duplicate pre-survey row {}: {} / {}", response.getRowNumber(),
+							person.getName(), person.getEmail());
+						continue;
+					}
+
+					// Insert person
 					long personId = personDao.insert(person);
 					person.setId(personId);
 
 					// Insert response linked to person
-					PreSurveyResponse response = p.response();
 					response.setPersonId(personId);
 					long responseId = preSurveyDao.insert(response);
 					response.setId(responseId);
@@ -89,6 +101,10 @@ public class ImportService
 				{
 					LOG.warn("Error importing row {}: {}", p.response().getRowNumber(), e.getMessage());
 				}
+			}
+			if (skipped > 0)
+			{
+				LOG.info("Skipped {} duplicate pre-survey records", skipped);
 			}
 			return count;
 		});
@@ -117,17 +133,29 @@ public class ImportService
 			PostSurveyDao postSurveyDao = handle.attach(PostSurveyDao.class);
 
 			int count = 0;
+			int skipped = 0;
 			for (ParsedPostSurvey p : parsed)
 			{
 				try
 				{
-					// Insert person
 					Person person = p.person();
+					PostSurveyResponse response = p.response();
+
+					// Check if record already exists (idempotent import)
+					if (postSurveyDao.exists(person.getCohort(), response.getTimestamp(),
+						person.getName(), person.getNormalizedEmail()))
+					{
+						skipped++;
+						LOG.debug("Skipping duplicate post-survey row {}: {} / {}", response.getRowNumber(),
+							person.getName(), person.getEmail());
+						continue;
+					}
+
+					// Insert person
 					long personId = personDao.insert(person);
 					person.setId(personId);
 
 					// Insert response linked to person
-					PostSurveyResponse response = p.response();
 					response.setPersonId(personId);
 					long responseId = postSurveyDao.insert(response);
 					response.setId(responseId);
@@ -138,6 +166,10 @@ public class ImportService
 				{
 					LOG.warn("Error importing row {}: {}", p.response().getRowNumber(), e.getMessage());
 				}
+			}
+			if (skipped > 0)
+			{
+				LOG.info("Skipped {} duplicate post-survey records", skipped);
 			}
 			return count;
 		});

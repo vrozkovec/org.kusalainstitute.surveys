@@ -1,6 +1,7 @@
 package org.kusalainstitute.surveys;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -93,20 +94,20 @@ public class App implements Callable<Integer>
 	}
 
 	/**
-	 * Import survey data from Excel files.
+	 * Import survey data from Excel files or directories.
 	 */
-	@Command(name = "import", description = "Import survey data from Excel files")
+	@Command(name = "import", description = "Import survey data from Excel files or directories")
 	static class ImportCommand implements Callable<Integer>
 	{
 
 		private final Flyway flyway;
 		private final ImportService importService;
 
-		@Option(names = { "--pre" }, description = "Path to pre-survey Excel file")
-		private Path preFile;
+		@Option(names = { "--pre" }, description = "Path to pre-survey Excel file or directory containing Excel files")
+		private Path prePath;
 
-		@Option(names = { "--post" }, description = "Path to post-survey Excel file")
-		private Path postFile;
+		@Option(names = { "--post" }, description = "Path to post-survey Excel file or directory containing Excel files")
+		private Path postPath;
 
 		/**
 		 * Creates a new ImportCommand with injected dependencies.
@@ -126,9 +127,9 @@ public class App implements Callable<Integer>
 		@Override
 		public Integer call()
 		{
-			if (preFile == null && postFile == null)
+			if (prePath == null && postPath == null)
 			{
-				System.err.println("Please specify --pre and/or --post file paths");
+				System.err.println("Please specify --pre and/or --post file or directory paths");
 				return 1;
 			}
 
@@ -139,20 +140,14 @@ public class App implements Callable<Integer>
 
 				int total = 0;
 
-				if (preFile != null)
+				if (prePath != null)
 				{
-					System.out.println("Importing pre-survey data from: " + preFile);
-					int count = importService.importPreSurvey(preFile);
-					System.out.println("Imported " + count + " pre-survey records");
-					total += count;
+					total += importPath(prePath, true);
 				}
 
-				if (postFile != null)
+				if (postPath != null)
 				{
-					System.out.println("Importing post-survey data from: " + postFile);
-					int count = importService.importPostSurvey(postFile);
-					System.out.println("Imported " + count + " post-survey records");
-					total += count;
+					total += importPath(postPath, false);
 				}
 
 				System.out.println("Total imported: " + total + " records");
@@ -165,6 +160,95 @@ public class App implements Callable<Integer>
 				e.printStackTrace();
 				return 1;
 			}
+		}
+
+		/**
+		 * Imports from a path, which can be either a file or directory.
+		 *
+		 * @param path
+		 *            the file or directory path
+		 * @param isPreSurvey
+		 *            true for pre-survey, false for post-survey
+		 * @return number of imported records
+		 * @throws IOException
+		 *             if import fails
+		 */
+		private int importPath(Path path, boolean isPreSurvey) throws IOException
+		{
+			if (Files.isDirectory(path))
+			{
+				return importDirectory(path, isPreSurvey);
+			}
+			else
+			{
+				return importFile(path, isPreSurvey);
+			}
+		}
+
+		/**
+		 * Imports all Excel files from a directory.
+		 *
+		 * @param dir
+		 *            the directory path
+		 * @param isPreSurvey
+		 *            true for pre-survey, false for post-survey
+		 * @return number of imported records
+		 * @throws IOException
+		 *             if import fails
+		 */
+		private int importDirectory(Path dir, boolean isPreSurvey) throws IOException
+		{
+			String type = isPreSurvey ? "pre-survey" : "post-survey";
+			System.out.println("Importing " + type + " data from directory: " + dir);
+
+			List<Path> excelFiles;
+			try (var stream = Files.list(dir))
+			{
+				excelFiles = stream
+					.filter(p -> p.toString().toLowerCase().endsWith(".xlsx"))
+					.filter(Files::isRegularFile)
+					.sorted()
+					.toList();
+			}
+
+			if (excelFiles.isEmpty())
+			{
+				System.out.println("No .xlsx files found in " + dir);
+				return 0;
+			}
+
+			System.out.println("Found " + excelFiles.size() + " Excel file(s)");
+
+			int total = 0;
+			for (Path file : excelFiles)
+			{
+				total += importFile(file, isPreSurvey);
+			}
+			return total;
+		}
+
+		/**
+		 * Imports a single Excel file.
+		 *
+		 * @param file
+		 *            the file path
+		 * @param isPreSurvey
+		 *            true for pre-survey, false for post-survey
+		 * @return number of imported records
+		 * @throws IOException
+		 *             if import fails
+		 */
+		private int importFile(Path file, boolean isPreSurvey) throws IOException
+		{
+			String type = isPreSurvey ? "pre-survey" : "post-survey";
+			System.out.println("Importing " + type + " data from: " + file.getFileName());
+
+			int count = isPreSurvey
+				? importService.importPreSurvey(file)
+				: importService.importPostSurvey(file);
+
+			System.out.println("Imported " + count + " " + type + " records from " + file.getFileName());
+			return count;
 		}
 	}
 
