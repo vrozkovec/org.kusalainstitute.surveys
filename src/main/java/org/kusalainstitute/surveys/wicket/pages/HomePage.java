@@ -82,7 +82,8 @@ public class HomePage extends BasePage
 				if (prePersonOpt.isPresent() && preOpt.isPresent() && postOpt.isPresent())
 				{
 					Person person = prePersonOpt.get();
-					pairs.add(new MatchedPairData(person.getName(), person.getId(), preOpt.get(), postOpt.get()));
+					pairs.add(new MatchedPairData(person.getName(), person.getId(), person.getCohort(), preOpt.get(),
+						postOpt.get()));
 				}
 			}
 

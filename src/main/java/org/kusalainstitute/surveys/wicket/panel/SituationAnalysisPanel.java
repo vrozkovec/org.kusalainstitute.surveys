@@ -71,6 +71,20 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 				// Student identity cell
 				item.add(new Label("studentName", row.name()));
 				item.add(new Label("studentId", String.valueOf(row.id())));
+				item.add(new Label("studentCohort", row.cohort()));
+
+				// Individual total changes
+				Label speakingTotal = new Label("studentSpeakingTotal",
+					SituationAnalysisModel.formatAverage(row.totalSpeakingChange()));
+				speakingTotal
+					.add(AttributeModifier.append("class", SituationAnalysisModel.getAverageCssClass(row.totalSpeakingChange())));
+				item.add(speakingTotal);
+
+				Label understandingTotal = new Label("studentUnderstandingTotal",
+					SituationAnalysisModel.formatAverage(row.totalUnderstandingChange()));
+				understandingTotal.add(
+					AttributeModifier.append("class", SituationAnalysisModel.getAverageCssClass(row.totalUnderstandingChange())));
+				item.add(understandingTotal);
 
 				// Speaking situation cells
 				item.add(new ListView<>("speakingCells", row.speakingData())
@@ -119,6 +133,19 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 				item.add(label);
 			}
 		});
+
+		// Total change labels
+		BigDecimal totalSpeaking = data.getTotalSpeakingChange();
+		Label totalSpeakingLabel = new Label("totalSpeakingChange", SituationAnalysisModel.formatAverage(totalSpeaking));
+		totalSpeakingLabel.add(AttributeModifier.append("class", SituationAnalysisModel.getAverageCssClass(totalSpeaking)));
+		add(totalSpeakingLabel);
+
+		BigDecimal totalUnderstanding = data.getTotalUnderstandingChange();
+		Label totalUnderstandingLabel = new Label("totalUnderstandingChange",
+			SituationAnalysisModel.formatAverage(totalUnderstanding));
+		totalUnderstandingLabel
+			.add(AttributeModifier.append("class", SituationAnalysisModel.getAverageCssClass(totalUnderstanding)));
+		add(totalUnderstandingLabel);
 	}
 
 	/**

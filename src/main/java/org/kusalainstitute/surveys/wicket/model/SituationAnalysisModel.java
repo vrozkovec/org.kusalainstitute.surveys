@@ -25,6 +25,8 @@ public class SituationAnalysisModel implements Serializable
 	private final List<StudentRow> rows;
 	private final List<BigDecimal> speakingAverages;
 	private final List<BigDecimal> understandingAverages;
+	private final BigDecimal totalSpeakingChange;
+	private final BigDecimal totalUnderstandingChange;
 
 	/**
 	 * Creates a new SituationAnalysisModel.
@@ -35,13 +37,19 @@ public class SituationAnalysisModel implements Serializable
 	 *            average changes for speaking situations (11 values)
 	 * @param understandingAverages
 	 *            average changes for understanding situations (11 values)
+	 * @param totalSpeakingChange
+	 *            overall average change for all speaking situations
+	 * @param totalUnderstandingChange
+	 *            overall average change for all understanding situations
 	 */
 	public SituationAnalysisModel(List<StudentRow> rows, List<BigDecimal> speakingAverages,
-		List<BigDecimal> understandingAverages)
+		List<BigDecimal> understandingAverages, BigDecimal totalSpeakingChange, BigDecimal totalUnderstandingChange)
 	{
 		this.rows = rows;
 		this.speakingAverages = speakingAverages;
 		this.understandingAverages = understandingAverages;
+		this.totalSpeakingChange = totalSpeakingChange;
+		this.totalUnderstandingChange = totalUnderstandingChange;
 	}
 
 	/**
@@ -69,7 +77,12 @@ public class SituationAnalysisModel implements Serializable
 			List<SituationData> speakingData = buildSpeakingData(pair.pre(), pair.post());
 			List<SituationData> understandingData = buildUnderstandingData(pair.pre(), pair.post());
 
-			rows.add(new StudentRow(pair.name(), pair.personId(), speakingData, understandingData));
+			// Calculate individual totals for this student
+			BigDecimal studentSpeakingTotal = calculateStudentAverage(speakingData);
+			BigDecimal studentUnderstandingTotal = calculateStudentAverage(understandingData);
+
+			rows.add(new StudentRow(pair.name(), pair.personId(), pair.cohort(), studentSpeakingTotal,
+				studentUnderstandingTotal, speakingData, understandingData));
 
 			// Collect deltas for averages
 			for (int i = 0; i < 11; i++)
@@ -88,7 +101,12 @@ public class SituationAnalysisModel implements Serializable
 		List<BigDecimal> speakingAverages = calculateAverages(speakingDeltas);
 		List<BigDecimal> understandingAverages = calculateAverages(understandingDeltas);
 
-		return new SituationAnalysisModel(rows, speakingAverages, understandingAverages);
+		// Calculate total changes across all situations
+		BigDecimal totalSpeakingChange = calculateTotalAverage(speakingDeltas);
+		BigDecimal totalUnderstandingChange = calculateTotalAverage(understandingDeltas);
+
+		return new SituationAnalysisModel(rows, speakingAverages, understandingAverages, totalSpeakingChange,
+			totalUnderstandingChange);
 	}
 
 	/**
@@ -167,6 +185,53 @@ public class SituationAnalysisModel implements Serializable
 	}
 
 	/**
+	 * Calculates the total average across all situations from collected deltas.
+	 *
+	 * @param deltaLists
+	 *            list of delta lists for each situation
+	 * @return overall average of all deltas, or null if no data
+	 */
+	private static BigDecimal calculateTotalAverage(List<List<BigDecimal>> deltaLists)
+	{
+		List<BigDecimal> allDeltas = new ArrayList<>();
+		for (List<BigDecimal> deltas : deltaLists)
+		{
+			allDeltas.addAll(deltas);
+		}
+
+		if (allDeltas.isEmpty())
+		{
+			return null;
+		}
+
+		BigDecimal sum = allDeltas.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+		return sum.divide(BigDecimal.valueOf(allDeltas.size()), 2, RoundingMode.HALF_UP);
+	}
+
+	/**
+	 * Calculates the average delta for a single student across all situations.
+	 *
+	 * @param situationData
+	 *            list of situation data for the student
+	 * @return average delta, or null if no data
+	 */
+	private static BigDecimal calculateStudentAverage(List<SituationData> situationData)
+	{
+		List<BigDecimal> deltas = situationData.stream()
+			.map(SituationData::delta)
+			.filter(d -> d != null)
+			.toList();
+
+		if (deltas.isEmpty())
+		{
+			return null;
+		}
+
+		BigDecimal sum = deltas.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+		return sum.divide(BigDecimal.valueOf(deltas.size()), 2, RoundingMode.HALF_UP);
+	}
+
+	/**
 	 * Returns the situation names for column headers.
 	 *
 	 * @return list of 11 situation names
@@ -189,6 +254,26 @@ public class SituationAnalysisModel implements Serializable
 	public List<BigDecimal> getUnderstandingAverages()
 	{
 		return understandingAverages;
+	}
+
+	/**
+	 * Returns the total average change for all speaking situations.
+	 *
+	 * @return total speaking change
+	 */
+	public BigDecimal getTotalSpeakingChange()
+	{
+		return totalSpeakingChange;
+	}
+
+	/**
+	 * Returns the total average change for all understanding situations.
+	 *
+	 * @return total understanding change
+	 */
+	public BigDecimal getTotalUnderstandingChange()
+	{
+		return totalUnderstandingChange;
 	}
 
 	/**
@@ -230,7 +315,7 @@ public class SituationAnalysisModel implements Serializable
 	/**
 	 * Data transfer object for matched pair input.
 	 */
-	public record MatchedPairData(String name, Long personId, PreSurveyResponse pre,
+	public record MatchedPairData(String name, Long personId, String cohort, PreSurveyResponse pre,
 		PostSurveyResponse post) implements Serializable
 	{
 	}

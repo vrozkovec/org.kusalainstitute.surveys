@@ -145,10 +145,71 @@
         display: block;
     }
 
-    .situation-table .student-id {
+    .situation-table .student-meta {
+        display: block;
         font-size: 10px;
+    }
+
+    .situation-table .student-id {
         color: #666;
     }
+
+    .situation-table .student-cohort {
+        color: #17a2b8;
+        font-weight: 500;
+        margin-left: 8px;
+    }
+
+    .situation-table .student-totals {
+        display: block;
+        font-size: 10px;
+        margin-top: 2px;
+    }
+
+    .situation-table .student-total-label {
+        color: #666;
+        margin-right: 2px;
+    }
+
+    .situation-table .student-total-value {
+        font-weight: bold;
+        margin-right: 8px;
+    }
+
+    .situation-table .student-total-value.pos { color: green; }
+    .situation-table .student-total-value.neg { color: red; }
+    .situation-table .student-total-value.neu { color: #999; }
+
+    /* Total Summary Section */
+    .total-summary {
+        display: flex;
+        gap: 40px;
+        margin-top: 20px;
+        padding: 15px 20px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+    }
+
+    .total-summary-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .total-summary-label {
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .total-summary-value {
+        font-size: 1.5em;
+        font-weight: bold;
+    }
+
+    .total-summary-value.pos { color: green; }
+    .total-summary-value.neg { color: red; }
+    .total-summary-value.neu { color: #999; }
 </style>
 </wicket:head>
 </head>
@@ -180,7 +241,14 @@
                 <!-- Student identity cell -->
                 <td class="sticky-col">
                     <span class="student-name" wicket:id="studentName"></span>
-                    <span class="student-id">ID: <span wicket:id="studentId"></span></span>
+                    <span class="student-meta">
+                        <span class="student-id">ID: <span wicket:id="studentId"></span></span>
+                        <span class="student-cohort" wicket:id="studentCohort"></span>
+                    </span>
+                    <span class="student-totals">
+                        <span class="student-total-label">S:</span><span class="student-total-value" wicket:id="studentSpeakingTotal"></span>
+                        <span class="student-total-label">U:</span><span class="student-total-value" wicket:id="studentUnderstandingTotal"></span>
+                    </span>
                 </td>
 
                 <!-- Speaking situation cells -->
@@ -220,6 +288,18 @@
             </tr>
         </tfoot>
     </table>
+</div>
+
+<!-- Total Change Summary -->
+<div class="total-summary">
+    <div class="total-summary-item">
+        <span class="total-summary-label">Speaking Confidence (Q7) &rarr; Ability (Q6) Total Change:</span>
+        <span class="total-summary-value" wicket:id="totalSpeakingChange"></span>
+    </div>
+    <div class="total-summary-item">
+        <span class="total-summary-label">Understanding (Q9) &rarr; Ease (Q7 Inv) Total Change:</span>
+        <span class="total-summary-value" wicket:id="totalUnderstandingChange"></span>
+    </div>
 </div>
 
 </wicket:panel>

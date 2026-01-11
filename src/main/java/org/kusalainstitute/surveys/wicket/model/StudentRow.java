@@ -1,6 +1,7 @@
 package org.kusalainstitute.surveys.wicket.model;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -10,6 +11,9 @@ import java.util.List;
 public record StudentRow(
 	String name,
 	Long id,
+	String cohort,
+	BigDecimal totalSpeakingChange,
+	BigDecimal totalUnderstandingChange,
 	List<SituationData> speakingData,
 	List<SituationData> understandingData) implements Serializable
 {
