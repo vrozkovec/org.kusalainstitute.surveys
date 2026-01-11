@@ -25,6 +25,11 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>name.berries</groupId>
+			<artifactId>wicket-common</artifactId>
+		</dependency>
+		
+		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 		</dependency>

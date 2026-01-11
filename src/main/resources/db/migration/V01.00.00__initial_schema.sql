@@ -36,7 +36,7 @@ create table pre_survey_response (
     why_improve_english_translated text,
 
     -- Speaking confidence Q7 (11 situations) - stored as 1-4 scale
-    speak_directions int comment '1=Not at all, 2=Somewhat, 3=Confident, 4=Very confident',
+    speak_directions int comment '1=Not at all, 2=Somewhat, 3=Confident, 4=Very confident, 5=Extremely confident',
     speak_healthcare int,
     speak_authorities int,
     speak_job_interview int,

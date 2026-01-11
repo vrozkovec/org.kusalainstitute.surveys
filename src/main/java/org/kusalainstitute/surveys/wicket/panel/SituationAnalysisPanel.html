@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html xmlns:wicket="http://wicket.apache.org">
+<head>
+<wicket:head>
+<style>
+    /* Scrolling Container */
+    .situation-table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        border: 1px solid #dee2e6;
+        margin-bottom: 20px;
+    }
+
+    .situation-table {
+        border-collapse: collapse;
+        width: 100%;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        font-size: 13px;
+        min-width: 2800px; /* Wide enough for 23 columns */
+    }
+
+    /* Sticky Column Setup */
+    .situation-table th.sticky-col,
+    .situation-table td.sticky-col {
+        position: sticky;
+        left: 0;
+        background-color: #fff;
+        z-index: 10;
+        border-right: 2px solid #dee2e6;
+        width: 160px;
+        min-width: 160px;
+        padding-left: 15px;
+    }
+
+    /* Header sticky col */
+    .situation-table th.sticky-col {
+        background-color: #343a40;
+        color: white;
+        z-index: 11;
+    }
+
+    /* Footer sticky col */
+    .situation-table tfoot th.sticky-col {
+        background-color: #e9ecef;
+        color: #333;
+        z-index: 11;
+    }
+
+    /* General Cell Styling */
+    .situation-table th,
+    .situation-table td {
+        padding: 8px 10px;
+        border-bottom: 1px solid #dee2e6;
+        border-right: 1px solid #f1f3f5;
+        vertical-align: middle;
+    }
+
+    .situation-table th {
+        background-color: #343a40;
+        color: white;
+        text-align: left;
+        white-space: nowrap;
+    }
+
+    /* Group Headers */
+    .situation-table .header-group {
+        text-align: center;
+        background-color: #495057;
+    }
+
+    .situation-table .header-group-understanding {
+        text-align: center;
+        background-color: #17a2b8;
+    }
+
+    /* Compact Progress Bar Visualization */
+    .situation-table .viz-cell {
+        width: 110px;
+        min-width: 110px;
+    }
+
+    .situation-table .bar-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 2px;
+        height: 8px;
+    }
+
+    .situation-table .track {
+        flex-grow: 1;
+        background-color: #e9ecef;
+        height: 100%;
+        border-radius: 2px;
+        overflow: hidden;
+        margin-right: 5px;
+        position: relative;
+    }
+
+    .situation-table .fill-pre {
+        background-color: #adb5bd;
+        height: 100%;
+    }
+
+    .situation-table .fill-post {
+        background-color: #28a745;
+        height: 100%;
+    }
+
+    .situation-table .val-text {
+        font-size: 10px;
+        color: #666;
+        width: 15px;
+        text-align: right;
+    }
+
+    /* Delta Indicators */
+    .situation-table .delta {
+        font-size: 10px;
+        font-weight: bold;
+        display: block;
+        text-align: right;
+        margin-top: 2px;
+    }
+
+    .situation-table .pos { color: green; }
+    .situation-table .neg { color: red; }
+    .situation-table .neu { color: #999; }
+
+    /* Summary Footer Styling */
+    .situation-table tfoot tr {
+        background-color: #e9ecef;
+        font-weight: bold;
+        border-top: 2px solid #333;
+    }
+
+    .situation-table .summary-val {
+        font-size: 1.1em;
+        text-align: center;
+    }
+
+    /* Student info styling */
+    .situation-table .student-name {
+        font-weight: bold;
+        display: block;
+    }
+
+    .situation-table .student-id {
+        font-size: 10px;
+        color: #666;
+    }
+</style>
+</wicket:head>
+</head>
+<body>
+<wicket:panel>
+
+<h3>Class Analysis: Situation-by-Situation</h3>
+<p><em>Horizontal scroll enabled. Pre (Gray) vs Post (Green).</em></p>
+
+<div class="situation-table-wrapper">
+    <table class="situation-table">
+        <thead>
+            <!-- Group header row -->
+            <tr>
+                <th class="sticky-col" rowspan="2">Student</th>
+                <th colspan="11" class="header-group">Speaking Confidence (Q7) &rarr; Ability (Q6)</th>
+                <th colspan="11" class="header-group-understanding">Understanding (Q9) &rarr; Ease (Q7 Inv)</th>
+            </tr>
+            <!-- Situation names row -->
+            <tr>
+                <!-- Speaking situation headers -->
+                <th wicket:id="speakingHeaders"><span wicket:id="situationName"></span></th>
+                <!-- Understanding situation headers -->
+                <th wicket:id="understandingHeaders"><span wicket:id="situationName"></span></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr wicket:id="studentRows">
+                <!-- Student identity cell -->
+                <td class="sticky-col">
+                    <span class="student-name" wicket:id="studentName"></span>
+                    <span class="student-id">ID: <span wicket:id="studentId"></span></span>
+                </td>
+
+                <!-- Speaking situation cells -->
+                <td class="viz-cell" wicket:id="speakingCells">
+                    <div class="bar-row">
+                        <div class="track"><div class="fill-pre" wicket:id="preBar"></div></div>
+                        <span class="val-text" wicket:id="preVal"></span>
+                    </div>
+                    <div class="bar-row">
+                        <div class="track"><div class="fill-post" wicket:id="postBar"></div></div>
+                        <span class="val-text" wicket:id="postVal"></span>
+                    </div>
+                    <span class="delta" wicket:id="delta"></span>
+                </td>
+
+                <!-- Understanding situation cells -->
+                <td class="viz-cell" wicket:id="understandingCells">
+                    <div class="bar-row">
+                        <div class="track"><div class="fill-pre" wicket:id="preBar"></div></div>
+                        <span class="val-text" wicket:id="preVal"></span>
+                    </div>
+                    <div class="bar-row">
+                        <div class="track"><div class="fill-post" wicket:id="postBar"></div></div>
+                        <span class="val-text" wicket:id="postVal"></span>
+                    </div>
+                    <span class="delta" wicket:id="delta"></span>
+                </td>
+            </tr>
+        </tbody>
+        <tfoot>
+            <tr>
+                <th class="sticky-col">Total Avg Change</th>
+                <!-- Speaking averages -->
+                <td class="summary-val" wicket:id="speakingAverages"><span wicket:id="avgValue"></span></td>
+                <!-- Understanding averages -->
+                <td class="summary-val" wicket:id="understandingAverages"><span wicket:id="avgValue"></span></td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+</wicket:panel>
+</body>
+</html>
