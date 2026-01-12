@@ -10,7 +10,12 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.kusalainstitute.surveys.pojo.Person;
 import org.kusalainstitute.surveys.pojo.PostSurveyResponse;
+import org.kusalainstitute.surveys.pojo.enums.AppFrequency;
+import org.kusalainstitute.surveys.pojo.enums.AppTimePerSession;
+import org.kusalainstitute.surveys.pojo.enums.InterviewTypePreference;
+import org.kusalainstitute.surveys.pojo.enums.ProgressAssessment;
 import org.kusalainstitute.surveys.pojo.enums.SurveyType;
+import org.kusalainstitute.surveys.pojo.enums.YesNo;
 
 /**
  * Parser for post-survey Excel files.
@@ -144,10 +149,10 @@ public class PostSurveyParser extends ExcelParser
 		response.setRowNumber(rowNum);
 
 		// App usage Q1-Q4
-		response.setAppUsageDuration(getStringValue(row, COL_APP_DURATION));
-		response.setAppTimePerSession(getStringValue(row, COL_TIME_PER_SESSION));
-		response.setAppFrequency(getStringValue(row, COL_FREQUENCY));
-		response.setProgressAssessment(getStringValue(row, COL_PROGRESS));
+		response.setAppUsageDuration(AppTimePerSession.fromText(getStringValue(row, COL_APP_DURATION)));
+		response.setAppTimePerSession(AppTimePerSession.fromText(getStringValue(row, COL_TIME_PER_SESSION)));
+		response.setAppFrequency(AppFrequency.fromText(getStringValue(row, COL_FREQUENCY)));
+		response.setProgressAssessment(ProgressAssessment.fromText(getStringValue(row, COL_PROGRESS)));
 
 		// Q5 - What helped most
 		response.setWhatHelpedMostOriginal(getStringValue(row, COL_WHAT_HELPED));
@@ -185,9 +190,9 @@ public class PostSurveyParser extends ExcelParser
 		response.setAvoidedSituationsOriginal(getStringValue(row, COL_AVOIDED));
 		response.setHasEnoughSupport(getStringValue(row, COL_SUPPORT));
 		response.setDesiredResourcesOriginal(getStringValue(row, COL_RESOURCES));
-		response.setWillingToInterview(getStringValue(row, COL_WILLING_INTERVIEW));
+		response.setWillingToInterview(YesNo.fromText(getStringValue(row, COL_WILLING_INTERVIEW)));
 		response.setInterviewDeclineReasonOriginal(getStringValue(row, COL_DECLINE_REASON));
-		response.setPreferredInterviewType(getStringValue(row, COL_INTERVIEW_TYPE));
+		response.setPreferredInterviewType(InterviewTypePreference.fromText(getStringValue(row, COL_INTERVIEW_TYPE)));
 		response.setContactInfo(getStringValue(row, COL_CONTACT));
 		response.setAdditionalCommentsOriginal(getStringValue(row, COL_ADDITIONAL));
 

@@ -10,6 +10,9 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.kusalainstitute.surveys.pojo.Person;
 import org.kusalainstitute.surveys.pojo.PreSurveyResponse;
+import org.kusalainstitute.surveys.pojo.enums.ChildrenAgeGroup;
+import org.kusalainstitute.surveys.pojo.enums.HowFoundKusala;
+import org.kusalainstitute.surveys.pojo.enums.StudyDuration;
 import org.kusalainstitute.surveys.pojo.enums.SurveyType;
 
 /**
@@ -137,10 +140,10 @@ public class PreSurveyParser extends ExcelParser
 		response.setRowNumber(rowNum);
 
 		// Demographics
-		response.setHowFoundKusala(getStringValue(row, COL_HOW_FOUND));
-		response.setStudyWithTeacherDuration(getStringValue(row, COL_STUDY_TEACHER));
-		response.setStudyOnOwnDuration(getStringValue(row, COL_STUDY_OWN));
-		response.setChildrenAges(getStringValue(row, COL_CHILDREN_AGES));
+		response.setHowFoundKusala(HowFoundKusala.fromText(getStringValue(row, COL_HOW_FOUND)));
+		response.setStudyWithTeacherDuration(StudyDuration.fromText(getStringValue(row, COL_STUDY_TEACHER)));
+		response.setStudyOnOwnDuration(StudyDuration.fromText(getStringValue(row, COL_STUDY_OWN)));
+		response.setChildrenAges(ChildrenAgeGroup.fromMultiSelectText(getStringValue(row, COL_CHILDREN_AGES)));
 		response.setMostDifficultThingOriginal(getStringValue(row, COL_MOST_DIFFICULT));
 		response.setWhyImproveEnglishOriginal(getStringValue(row, COL_WHY_IMPROVE));
 

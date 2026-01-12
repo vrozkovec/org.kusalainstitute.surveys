@@ -4,6 +4,11 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.Objects;
+import java.util.Set;
+
+import org.kusalainstitute.surveys.pojo.enums.ChildrenAgeGroup;
+import org.kusalainstitute.surveys.pojo.enums.HowFoundKusala;
+import org.kusalainstitute.surveys.pojo.enums.StudyDuration;
 
 /**
  * Pre-survey response data collected before using the Latudio app. Contains demographics, English
@@ -19,10 +24,10 @@ public class PreSurveyResponse
 	private Integer rowNumber;
 
 	// Demographics (Q1-Q6)
-	private String howFoundKusala;
-	private String studyWithTeacherDuration;
-	private String studyOnOwnDuration;
-	private String childrenAges;
+	private HowFoundKusala howFoundKusala;
+	private StudyDuration studyWithTeacherDuration;
+	private StudyDuration studyOnOwnDuration;
+	private Set<ChildrenAgeGroup> childrenAges;
 	private String mostDifficultThingOriginal;
 	private String mostDifficultThingTranslated;
 	private String whyImproveEnglishOriginal;
@@ -196,42 +201,42 @@ public class PreSurveyResponse
 		this.rowNumber = rowNumber;
 	}
 
-	public String getHowFoundKusala()
+	public HowFoundKusala getHowFoundKusala()
 	{
 		return howFoundKusala;
 	}
 
-	public void setHowFoundKusala(String howFoundKusala)
+	public void setHowFoundKusala(HowFoundKusala howFoundKusala)
 	{
 		this.howFoundKusala = howFoundKusala;
 	}
 
-	public String getStudyWithTeacherDuration()
+	public StudyDuration getStudyWithTeacherDuration()
 	{
 		return studyWithTeacherDuration;
 	}
 
-	public void setStudyWithTeacherDuration(String studyWithTeacherDuration)
+	public void setStudyWithTeacherDuration(StudyDuration studyWithTeacherDuration)
 	{
 		this.studyWithTeacherDuration = studyWithTeacherDuration;
 	}
 
-	public String getStudyOnOwnDuration()
+	public StudyDuration getStudyOnOwnDuration()
 	{
 		return studyOnOwnDuration;
 	}
 
-	public void setStudyOnOwnDuration(String studyOnOwnDuration)
+	public void setStudyOnOwnDuration(StudyDuration studyOnOwnDuration)
 	{
 		this.studyOnOwnDuration = studyOnOwnDuration;
 	}
 
-	public String getChildrenAges()
+	public Set<ChildrenAgeGroup> getChildrenAges()
 	{
 		return childrenAges;
 	}
 
-	public void setChildrenAges(String childrenAges)
+	public void setChildrenAges(Set<ChildrenAgeGroup> childrenAges)
 	{
 		this.childrenAges = childrenAges;
 	}

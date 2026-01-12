@@ -5,6 +5,12 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+import org.kusalainstitute.surveys.pojo.enums.AppFrequency;
+import org.kusalainstitute.surveys.pojo.enums.AppTimePerSession;
+import org.kusalainstitute.surveys.pojo.enums.InterviewTypePreference;
+import org.kusalainstitute.surveys.pojo.enums.ProgressAssessment;
+import org.kusalainstitute.surveys.pojo.enums.YesNo;
+
 /**
  * Post-survey response data collected after using the Latudio app. Contains app usage information,
  * English ability levels, and qualitative feedback.
@@ -19,10 +25,10 @@ public class PostSurveyResponse
 	private Integer rowNumber;
 
 	// App usage Q1-Q4
-	private String appUsageDuration;
-	private String appTimePerSession;
-	private String appFrequency;
-	private String progressAssessment;
+	private AppTimePerSession appUsageDuration;
+	private AppTimePerSession appTimePerSession;
+	private AppFrequency appFrequency;
+	private ProgressAssessment progressAssessment;
 
 	// Q5 Free text
 	private String whatHelpedMostOriginal;
@@ -78,10 +84,10 @@ public class PostSurveyResponse
 	private String desiredResourcesTranslated;
 
 	// Q14-16 Interview questions
-	private String willingToInterview;
+	private YesNo willingToInterview;
 	private String interviewDeclineReasonOriginal;
 	private String interviewDeclineReasonTranslated;
-	private String preferredInterviewType;
+	private InterviewTypePreference preferredInterviewType;
 	private String contactInfo;
 
 	// Q17 Free text
@@ -218,42 +224,42 @@ public class PostSurveyResponse
 		this.rowNumber = rowNumber;
 	}
 
-	public String getAppUsageDuration()
+	public AppTimePerSession getAppUsageDuration()
 	{
 		return appUsageDuration;
 	}
 
-	public void setAppUsageDuration(String appUsageDuration)
+	public void setAppUsageDuration(AppTimePerSession appUsageDuration)
 	{
 		this.appUsageDuration = appUsageDuration;
 	}
 
-	public String getAppTimePerSession()
+	public AppTimePerSession getAppTimePerSession()
 	{
 		return appTimePerSession;
 	}
 
-	public void setAppTimePerSession(String appTimePerSession)
+	public void setAppTimePerSession(AppTimePerSession appTimePerSession)
 	{
 		this.appTimePerSession = appTimePerSession;
 	}
 
-	public String getAppFrequency()
+	public AppFrequency getAppFrequency()
 	{
 		return appFrequency;
 	}
 
-	public void setAppFrequency(String appFrequency)
+	public void setAppFrequency(AppFrequency appFrequency)
 	{
 		this.appFrequency = appFrequency;
 	}
 
-	public String getProgressAssessment()
+	public ProgressAssessment getProgressAssessment()
 	{
 		return progressAssessment;
 	}
 
-	public void setProgressAssessment(String progressAssessment)
+	public void setProgressAssessment(ProgressAssessment progressAssessment)
 	{
 		this.progressAssessment = progressAssessment;
 	}
@@ -608,12 +614,12 @@ public class PostSurveyResponse
 		this.desiredResourcesTranslated = desiredResourcesTranslated;
 	}
 
-	public String getWillingToInterview()
+	public YesNo getWillingToInterview()
 	{
 		return willingToInterview;
 	}
 
-	public void setWillingToInterview(String willingToInterview)
+	public void setWillingToInterview(YesNo willingToInterview)
 	{
 		this.willingToInterview = willingToInterview;
 	}
@@ -638,12 +644,12 @@ public class PostSurveyResponse
 		this.interviewDeclineReasonTranslated = interviewDeclineReasonTranslated;
 	}
 
-	public String getPreferredInterviewType()
+	public InterviewTypePreference getPreferredInterviewType()
 	{
 		return preferredInterviewType;
 	}
 
-	public void setPreferredInterviewType(String preferredInterviewType)
+	public void setPreferredInterviewType(InterviewTypePreference preferredInterviewType)
 	{
 		this.preferredInterviewType = preferredInterviewType;
 	}
