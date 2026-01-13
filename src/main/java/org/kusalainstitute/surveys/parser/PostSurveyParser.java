@@ -8,14 +8,14 @@ import java.util.List;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.kusalainstitute.surveys.mapper.AppFrequencyMapper;
+import org.kusalainstitute.surveys.mapper.AppTimePerSessionMapper;
+import org.kusalainstitute.surveys.mapper.InterviewTypePreferenceMapper;
+import org.kusalainstitute.surveys.mapper.ProgressAssessmentMapper;
+import org.kusalainstitute.surveys.mapper.YesNoMapper;
 import org.kusalainstitute.surveys.pojo.Person;
 import org.kusalainstitute.surveys.pojo.PostSurveyResponse;
-import org.kusalainstitute.surveys.pojo.enums.AppFrequency;
-import org.kusalainstitute.surveys.pojo.enums.AppTimePerSession;
-import org.kusalainstitute.surveys.pojo.enums.InterviewTypePreference;
-import org.kusalainstitute.surveys.pojo.enums.ProgressAssessment;
 import org.kusalainstitute.surveys.pojo.enums.SurveyType;
-import org.kusalainstitute.surveys.pojo.enums.YesNo;
 
 /**
  * Parser for post-survey Excel files.
@@ -62,6 +62,13 @@ public class PostSurveyParser extends ExcelParser
 	private static final int COL_INTERVIEW_TYPE = 40;
 	private static final int COL_CONTACT = 41;
 	private static final int COL_ADDITIONAL = 42;
+
+	// Mappers for enum conversion
+	private final AppTimePerSessionMapper appTimePerSessionMapper = new AppTimePerSessionMapper();
+	private final AppFrequencyMapper appFrequencyMapper = new AppFrequencyMapper();
+	private final ProgressAssessmentMapper progressAssessmentMapper = new ProgressAssessmentMapper();
+	private final YesNoMapper yesNoMapper = new YesNoMapper();
+	private final InterviewTypePreferenceMapper interviewTypePreferenceMapper = new InterviewTypePreferenceMapper();
 
 	/**
 	 * Parses a post-survey Excel file.
@@ -149,10 +156,10 @@ public class PostSurveyParser extends ExcelParser
 		response.setRowNumber(rowNum);
 
 		// App usage Q1-Q4
-		response.setAppUsageDuration(AppTimePerSession.fromText(getStringValue(row, COL_APP_DURATION)));
-		response.setAppTimePerSession(AppTimePerSession.fromText(getStringValue(row, COL_TIME_PER_SESSION)));
-		response.setAppFrequency(AppFrequency.fromText(getStringValue(row, COL_FREQUENCY)));
-		response.setProgressAssessment(ProgressAssessment.fromText(getStringValue(row, COL_PROGRESS)));
+		response.setAppUsageDuration(appTimePerSessionMapper.map(getStringValue(row, COL_APP_DURATION)));
+		response.setAppTimePerSession(appTimePerSessionMapper.map(getStringValue(row, COL_TIME_PER_SESSION)));
+		response.setAppFrequency(appFrequencyMapper.map(getStringValue(row, COL_FREQUENCY)));
+		response.setProgressAssessment(progressAssessmentMapper.map(getStringValue(row, COL_PROGRESS)));
 
 		// Q5 - What helped most
 		response.setWhatHelpedMostOriginal(getStringValue(row, COL_WHAT_HELPED));
@@ -190,9 +197,9 @@ public class PostSurveyParser extends ExcelParser
 		response.setAvoidedSituationsOriginal(getStringValue(row, COL_AVOIDED));
 		response.setHasEnoughSupport(getStringValue(row, COL_SUPPORT));
 		response.setDesiredResourcesOriginal(getStringValue(row, COL_RESOURCES));
-		response.setWillingToInterview(YesNo.fromText(getStringValue(row, COL_WILLING_INTERVIEW)));
+		response.setWillingToInterview(yesNoMapper.map(getStringValue(row, COL_WILLING_INTERVIEW)));
 		response.setInterviewDeclineReasonOriginal(getStringValue(row, COL_DECLINE_REASON));
-		response.setPreferredInterviewType(InterviewTypePreference.fromText(getStringValue(row, COL_INTERVIEW_TYPE)));
+		response.setPreferredInterviewType(interviewTypePreferenceMapper.map(getStringValue(row, COL_INTERVIEW_TYPE)));
 		response.setContactInfo(getStringValue(row, COL_CONTACT));
 		response.setAdditionalCommentsOriginal(getStringValue(row, COL_ADDITIONAL));
 

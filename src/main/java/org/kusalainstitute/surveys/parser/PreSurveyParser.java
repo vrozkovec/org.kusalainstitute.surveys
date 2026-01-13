@@ -8,11 +8,11 @@ import java.util.List;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.kusalainstitute.surveys.mapper.ChildrenAgeGroupMapper;
+import org.kusalainstitute.surveys.mapper.HowFoundKusalaMapper;
+import org.kusalainstitute.surveys.mapper.StudyDurationMapper;
 import org.kusalainstitute.surveys.pojo.Person;
 import org.kusalainstitute.surveys.pojo.PreSurveyResponse;
-import org.kusalainstitute.surveys.pojo.enums.ChildrenAgeGroup;
-import org.kusalainstitute.surveys.pojo.enums.HowFoundKusala;
-import org.kusalainstitute.surveys.pojo.enums.StudyDuration;
 import org.kusalainstitute.surveys.pojo.enums.SurveyType;
 
 /**
@@ -53,6 +53,11 @@ public class PreSurveyParser extends ExcelParser
 	// Q10: column 34, Q11: column 35
 	private static final int COL_DIFFICULT_PART = 34;
 	private static final int COL_DESCRIBE_SITUATIONS = 35;
+
+	// Mappers for enum conversion
+	private final HowFoundKusalaMapper howFoundKusalaMapper = new HowFoundKusalaMapper();
+	private final StudyDurationMapper studyDurationMapper = new StudyDurationMapper();
+	private final ChildrenAgeGroupMapper childrenAgeGroupMapper = new ChildrenAgeGroupMapper();
 
 	/**
 	 * Parses a pre-survey Excel file.
@@ -140,10 +145,10 @@ public class PreSurveyParser extends ExcelParser
 		response.setRowNumber(rowNum);
 
 		// Demographics
-		response.setHowFoundKusala(HowFoundKusala.fromText(getStringValue(row, COL_HOW_FOUND)));
-		response.setStudyWithTeacherDuration(StudyDuration.fromText(getStringValue(row, COL_STUDY_TEACHER)));
-		response.setStudyOnOwnDuration(StudyDuration.fromText(getStringValue(row, COL_STUDY_OWN)));
-		response.setChildrenAges(ChildrenAgeGroup.fromMultiSelectText(getStringValue(row, COL_CHILDREN_AGES)));
+		response.setHowFoundKusala(howFoundKusalaMapper.map(getStringValue(row, COL_HOW_FOUND)));
+		response.setStudyWithTeacherDuration(studyDurationMapper.map(getStringValue(row, COL_STUDY_TEACHER)));
+		response.setStudyOnOwnDuration(studyDurationMapper.map(getStringValue(row, COL_STUDY_OWN)));
+		response.setChildrenAges(childrenAgeGroupMapper.mapMultiple(getStringValue(row, COL_CHILDREN_AGES)));
 		response.setMostDifficultThingOriginal(getStringValue(row, COL_MOST_DIFFICULT));
 		response.setWhyImproveEnglishOriginal(getStringValue(row, COL_WHY_IMPROVE));
 

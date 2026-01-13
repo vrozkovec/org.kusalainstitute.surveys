@@ -5,17 +5,19 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * Represents one student row in the situation analysis table.
- * Contains the student's identity and situation data for both speaking and understanding groups.
+ * Represents one student row in the situation analysis table. Contains the student's identity and
+ * situation data for speaking (pre/post comparison), understanding (pre Q9 only), ease (post Q7
+ * inverted only), and text answers from both pre and post surveys.
  */
 public record StudentRow(
 	String name,
 	Long id,
 	String cohort,
 	BigDecimal totalSpeakingChange,
-	BigDecimal totalUnderstandingChange,
 	List<SituationData> speakingData,
-	List<SituationData> understandingData) implements Serializable
+	List<SingleValueData> understandingData,
+	List<SingleValueData> easeData,
+	List<TextAnswerData> textAnswers) implements Serializable
 {
 
 	/**

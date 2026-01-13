@@ -9,13 +9,18 @@ import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.markup.html.panel.GenericPanel;
 import org.apache.wicket.model.IModel;
+import org.kusalainstitute.surveys.wicket.model.SingleValueData;
 import org.kusalainstitute.surveys.wicket.model.SituationAnalysisModel;
 import org.kusalainstitute.surveys.wicket.model.SituationData;
 import org.kusalainstitute.surveys.wicket.model.StudentRow;
+import org.kusalainstitute.surveys.wicket.model.TextAnswerData;
 
 /**
  * Wicket panel displaying a situation-by-situation analysis table.
- * Shows pre/post survey comparisons with visual progress bars and change indicators.
+ * Shows three sections:
+ * - Speaking: pre/post comparison with progress bars and delta
+ * - Understanding: pre Q9 values only (single bar)
+ * - Ease: post Q7 inverted values only (single bar)
  */
 public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 {
@@ -60,6 +65,29 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 			}
 		});
 
+		// Situation name headers - Ease group
+		add(new ListView<>("easeHeaders", data.getSituationNames())
+		{
+			@Override
+			protected void populateItem(ListItem<String> item)
+			{
+				item.add(new Label("situationName", item.getModelObject()));
+			}
+		});
+
+		// Text answer column headers
+		add(new ListView<>("textHeaders", data.getTextColumnLabels())
+		{
+			@Override
+			protected void populateItem(ListItem<String> item)
+			{
+				item.add(new Label("headerLabel", item.getModelObject()));
+				// Apply CSS class based on position (first 5 are pre, rest are post)
+				String cssClass = item.getIndex() < 5 ? "header-text-pre" : "header-text-post";
+				item.add(AttributeModifier.append("class", cssClass));
+			}
+		});
+
 		// Student data rows
 		add(new ListView<>("studentRows", data.getRows())
 		{
@@ -73,20 +101,14 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 				item.add(new Label("studentId", String.valueOf(row.id())));
 				item.add(new Label("studentCohort", row.cohort()));
 
-				// Individual total changes
+				// Individual total change for speaking
 				Label speakingTotal = new Label("studentSpeakingTotal",
 					SituationAnalysisModel.formatAverage(row.totalSpeakingChange()));
 				speakingTotal
 					.add(AttributeModifier.append("class", SituationAnalysisModel.getAverageCssClass(row.totalSpeakingChange())));
 				item.add(speakingTotal);
 
-				Label understandingTotal = new Label("studentUnderstandingTotal",
-					SituationAnalysisModel.formatAverage(row.totalUnderstandingChange()));
-				understandingTotal.add(
-					AttributeModifier.append("class", SituationAnalysisModel.getAverageCssClass(row.totalUnderstandingChange())));
-				item.add(understandingTotal);
-
-				// Speaking situation cells
+				// Speaking situation cells (pre/post comparison)
 				item.add(new ListView<>("speakingCells", row.speakingData())
 				{
 					@Override
@@ -96,19 +118,39 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 					}
 				});
 
-				// Understanding situation cells
+				// Understanding situation cells (single value)
 				item.add(new ListView<>("understandingCells", row.understandingData())
 				{
 					@Override
-					protected void populateItem(ListItem<SituationData> cellItem)
+					protected void populateItem(ListItem<SingleValueData> cellItem)
 					{
-						populateSituationCell(cellItem);
+						populateSingleValueCell(cellItem);
+					}
+				});
+
+				// Ease situation cells (single value)
+				item.add(new ListView<>("easeCells", row.easeData())
+				{
+					@Override
+					protected void populateItem(ListItem<SingleValueData> cellItem)
+					{
+						populateSingleValueCell(cellItem);
+					}
+				});
+
+				// Text answer cells
+				item.add(new ListView<>("textCells", row.textAnswers())
+				{
+					@Override
+					protected void populateItem(ListItem<TextAnswerData> cellItem)
+					{
+						populateTextCell(cellItem);
 					}
 				});
 			}
 		});
 
-		// Footer averages - Speaking
+		// Footer averages - Speaking (deltas with sign)
 		add(new ListView<>("speakingAverages", data.getSpeakingAverages())
 		{
 			@Override
@@ -121,35 +163,39 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 			}
 		});
 
-		// Footer averages - Understanding
+		// Footer averages - Understanding (values without sign)
 		add(new ListView<>("understandingAverages", data.getUnderstandingAverages())
 		{
 			@Override
 			protected void populateItem(ListItem<BigDecimal> item)
 			{
 				BigDecimal avg = item.getModelObject();
-				Label label = new Label("avgValue", SituationAnalysisModel.formatAverage(avg));
-				label.add(AttributeModifier.append("class", SituationAnalysisModel.getAverageCssClass(avg)));
+				Label label = new Label("avgValue", SituationAnalysisModel.formatValue(avg));
 				item.add(label);
 			}
 		});
 
-		// Total change labels
+		// Footer averages - Ease (values without sign)
+		add(new ListView<>("easeAverages", data.getEaseAverages())
+		{
+			@Override
+			protected void populateItem(ListItem<BigDecimal> item)
+			{
+				BigDecimal avg = item.getModelObject();
+				Label label = new Label("avgValue", SituationAnalysisModel.formatValue(avg));
+				item.add(label);
+			}
+		});
+
+		// Total change label (speaking only)
 		BigDecimal totalSpeaking = data.getTotalSpeakingChange();
 		Label totalSpeakingLabel = new Label("totalSpeakingChange", SituationAnalysisModel.formatAverage(totalSpeaking));
 		totalSpeakingLabel.add(AttributeModifier.append("class", SituationAnalysisModel.getAverageCssClass(totalSpeaking)));
 		add(totalSpeakingLabel);
-
-		BigDecimal totalUnderstanding = data.getTotalUnderstandingChange();
-		Label totalUnderstandingLabel = new Label("totalUnderstandingChange",
-			SituationAnalysisModel.formatAverage(totalUnderstanding));
-		totalUnderstandingLabel
-			.add(AttributeModifier.append("class", SituationAnalysisModel.getAverageCssClass(totalUnderstanding)));
-		add(totalUnderstandingLabel);
 	}
 
 	/**
-	 * Populates a single situation cell with pre/post bars and delta.
+	 * Populates a situation cell with pre/post bars and delta (for Speaking section).
 	 *
 	 * @param cellItem
 	 *            the list item for the situation cell
@@ -178,5 +224,41 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 		Label delta = new Label("delta", data.getFormattedDelta());
 		delta.add(AttributeModifier.append("class", data.getDeltaCssClass()));
 		cellItem.add(delta);
+	}
+
+	/**
+	 * Populates a single-value cell with one bar (for Understanding/Ease sections).
+	 *
+	 * @param cellItem
+	 *            the list item for the single-value cell
+	 */
+	private void populateSingleValueCell(ListItem<SingleValueData> cellItem)
+	{
+		SingleValueData data = cellItem.getModelObject();
+
+		// Single bar
+		WebMarkupContainer bar = new WebMarkupContainer("bar");
+		bar.add(AttributeModifier.replace("style", "width:" + data.widthPercent() + "%"));
+		cellItem.add(bar);
+
+		// Value
+		cellItem.add(new Label("val", data.getFormattedValue()));
+	}
+
+	/**
+	 * Populates a text answer cell with styled background based on survey type.
+	 *
+	 * @param cellItem
+	 *            the list item for the text answer cell
+	 */
+	private void populateTextCell(ListItem<TextAnswerData> cellItem)
+	{
+		TextAnswerData data = cellItem.getModelObject();
+
+		// Text value
+		cellItem.add(new Label("textValue", data.getDisplayValue()));
+
+		// Apply CSS class for pre/post styling
+		cellItem.add(AttributeModifier.append("class", data.getCssClass()));
 	}
 }

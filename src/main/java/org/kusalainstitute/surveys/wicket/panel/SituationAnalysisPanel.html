@@ -17,7 +17,7 @@
         width: 100%;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         font-size: 13px;
-        min-width: 2800px; /* Wide enough for 23 columns */
+        min-width: 6500px; /* Wide enough for 33 situation columns + 13 text columns + student */
     }
 
     /* Sticky Column Setup */
@@ -74,10 +74,20 @@
         background-color: #17a2b8;
     }
 
+    .situation-table .header-group-ease {
+        text-align: center;
+        background-color: #6f42c1;
+    }
+
     /* Compact Progress Bar Visualization */
     .situation-table .viz-cell {
         width: 110px;
         min-width: 110px;
+    }
+
+    .situation-table .single-val-cell {
+        width: 70px;
+        min-width: 70px;
     }
 
     .situation-table .bar-row {
@@ -85,6 +95,12 @@
         align-items: center;
         margin-bottom: 2px;
         height: 8px;
+    }
+
+    .situation-table .single-bar-row {
+        display: flex;
+        align-items: center;
+        height: 12px;
     }
 
     .situation-table .track {
@@ -104,6 +120,16 @@
 
     .situation-table .fill-post {
         background-color: #28a745;
+        height: 100%;
+    }
+
+    .situation-table .fill-understanding {
+        background-color: #17a2b8;
+        height: 100%;
+    }
+
+    .situation-table .fill-ease {
+        background-color: #6f42c1;
         height: 100%;
     }
 
@@ -210,6 +236,46 @@
     .total-summary-value.pos { color: green; }
     .total-summary-value.neg { color: red; }
     .total-summary-value.neu { color: #999; }
+
+    /* Text Answer Columns */
+    .situation-table .text-cell {
+        min-width: 180px;
+        max-width: 250px;
+        white-space: normal;
+        font-size: 11px;
+        vertical-align: top;
+        padding: 6px 8px;
+    }
+
+    .situation-table .text-cell-pre {
+        background-color: #e3f2fd; /* Light blue */
+    }
+
+    .situation-table .text-cell-post {
+        background-color: #e8f5e9; /* Light green */
+    }
+
+    .situation-table .header-text-pre {
+        background-color: #2196f3; /* Blue */
+        text-align: center;
+        min-width: 180px;
+    }
+
+    .situation-table .header-text-post {
+        background-color: #4caf50; /* Green */
+        text-align: center;
+        min-width: 180px;
+    }
+
+    .situation-table .header-group-text-pre {
+        text-align: center;
+        background-color: #1976d2;
+    }
+
+    .situation-table .header-group-text-post {
+        text-align: center;
+        background-color: #388e3c;
+    }
 </style>
 </wicket:head>
 </head>
@@ -217,7 +283,7 @@
 <wicket:panel>
 
 <h3>Class Analysis: Situation-by-Situation</h3>
-<p><em>Horizontal scroll enabled. Pre (Gray) vs Post (Green).</em></p>
+<p><em>Horizontal scroll enabled. Speaking: Pre (Gray) vs Post (Green). Understanding: Pre Q9 (Blue). Ease: Post Q7 Inv (Purple).</em></p>
 
 <div class="situation-table-wrapper">
     <table class="situation-table">
@@ -226,7 +292,10 @@
             <tr>
                 <th class="sticky-col" rowspan="2">Student</th>
                 <th colspan="11" class="header-group">Speaking Confidence (Q7) &rarr; Ability (Q6)</th>
-                <th colspan="11" class="header-group-understanding">Understanding (Q9) &rarr; Ease (Q7 Inv)</th>
+                <th colspan="11" class="header-group-understanding">Understanding (Q9)</th>
+                <th colspan="11" class="header-group-ease">Ease (Q7 Inv)</th>
+                <th colspan="5" class="header-group-text-pre">Pre-Survey Text Answers</th>
+                <th colspan="8" class="header-group-text-post">Post-Survey Text Answers</th>
             </tr>
             <!-- Situation names row -->
             <tr>
@@ -234,6 +303,10 @@
                 <th wicket:id="speakingHeaders"><span wicket:id="situationName"></span></th>
                 <!-- Understanding situation headers -->
                 <th wicket:id="understandingHeaders"><span wicket:id="situationName"></span></th>
+                <!-- Ease situation headers -->
+                <th wicket:id="easeHeaders"><span wicket:id="situationName"></span></th>
+                <!-- Text answer column headers -->
+                <th wicket:id="textHeaders"><span wicket:id="headerLabel"></span></th>
             </tr>
         </thead>
         <tbody>
@@ -247,11 +320,10 @@
                     </span>
                     <span class="student-totals">
                         <span class="student-total-label">S:</span><span class="student-total-value" wicket:id="studentSpeakingTotal"></span>
-                        <span class="student-total-label">U:</span><span class="student-total-value" wicket:id="studentUnderstandingTotal"></span>
                     </span>
                 </td>
 
-                <!-- Speaking situation cells -->
+                <!-- Speaking situation cells (pre/post comparison) -->
                 <td class="viz-cell" wicket:id="speakingCells">
                     <div class="bar-row">
                         <div class="track"><div class="fill-pre" wicket:id="preBar"></div></div>
@@ -264,27 +336,37 @@
                     <span class="delta" wicket:id="delta"></span>
                 </td>
 
-                <!-- Understanding situation cells -->
-                <td class="viz-cell" wicket:id="understandingCells">
-                    <div class="bar-row">
-                        <div class="track"><div class="fill-pre" wicket:id="preBar"></div></div>
-                        <span class="val-text" wicket:id="preVal"></span>
+                <!-- Understanding situation cells (single value) -->
+                <td class="single-val-cell" wicket:id="understandingCells">
+                    <div class="single-bar-row">
+                        <div class="track"><div class="fill-understanding" wicket:id="bar"></div></div>
+                        <span class="val-text" wicket:id="val"></span>
                     </div>
-                    <div class="bar-row">
-                        <div class="track"><div class="fill-post" wicket:id="postBar"></div></div>
-                        <span class="val-text" wicket:id="postVal"></span>
+                </td>
+
+                <!-- Ease situation cells (single value) -->
+                <td class="single-val-cell" wicket:id="easeCells">
+                    <div class="single-bar-row">
+                        <div class="track"><div class="fill-ease" wicket:id="bar"></div></div>
+                        <span class="val-text" wicket:id="val"></span>
                     </div>
-                    <span class="delta" wicket:id="delta"></span>
+                </td>
+
+                <!-- Text answer cells -->
+                <td class="text-cell" wicket:id="textCells">
+                    <span wicket:id="textValue"></span>
                 </td>
             </tr>
         </tbody>
         <tfoot>
             <tr>
-                <th class="sticky-col">Total Avg Change</th>
-                <!-- Speaking averages -->
+                <th class="sticky-col">Avg</th>
+                <!-- Speaking averages (deltas) -->
                 <td class="summary-val" wicket:id="speakingAverages"><span wicket:id="avgValue"></span></td>
-                <!-- Understanding averages -->
+                <!-- Understanding averages (values) -->
                 <td class="summary-val" wicket:id="understandingAverages"><span wicket:id="avgValue"></span></td>
+                <!-- Ease averages (values) -->
+                <td class="summary-val" wicket:id="easeAverages"><span wicket:id="avgValue"></span></td>
             </tr>
         </tfoot>
     </table>
@@ -295,10 +377,6 @@
     <div class="total-summary-item">
         <span class="total-summary-label">Speaking Confidence (Q7) &rarr; Ability (Q6) Total Change:</span>
         <span class="total-summary-value" wicket:id="totalSpeakingChange"></span>
-    </div>
-    <div class="total-summary-item">
-        <span class="total-summary-label">Understanding (Q9) &rarr; Ease (Q7 Inv) Total Change:</span>
-        <span class="total-summary-value" wicket:id="totalUnderstandingChange"></span>
     </div>
 </div>
 
