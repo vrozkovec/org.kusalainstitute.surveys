@@ -9,11 +9,16 @@ import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.markup.html.panel.GenericPanel;
 import org.apache.wicket.model.IModel;
+import org.apache.wicket.model.Model;
 import org.kusalainstitute.surveys.wicket.model.SingleValueData;
 import org.kusalainstitute.surveys.wicket.model.SituationAnalysisModel;
+import org.kusalainstitute.surveys.wicket.model.SituationAnalysisModel.HeaderInfo;
 import org.kusalainstitute.surveys.wicket.model.SituationData;
 import org.kusalainstitute.surveys.wicket.model.StudentRow;
 import org.kusalainstitute.surveys.wicket.model.TextAnswerData;
+
+import de.agilecoders.wicket.core.markup.html.bootstrap.components.TooltipBehavior;
+import de.agilecoders.wicket.core.markup.html.bootstrap.components.TooltipConfig;
 
 /**
  * Wicket panel displaying a situation-by-situation analysis table.
@@ -45,43 +50,92 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 
 		SituationAnalysisModel data = getModelObject();
 
+		// Tooltip configuration for headers
+		TooltipConfig tooltipConfig = new TooltipConfig()
+			.withPlacement(TooltipConfig.Placement.bottom)
+			.withHtml(true);
+
+		// Group header tooltips (colspan row)
+		WebMarkupContainer speakingGroupHeader = new WebMarkupContainer("speakingGroupHeader");
+		speakingGroupHeader.add(new TooltipBehavior(Model.of(
+			"Pre (Q7): " + SituationAnalysisModel.Q7_PRE_TEXT.replace(": ", "")
+				+ "<br/>Post (Q6): " + SituationAnalysisModel.Q6_POST_TEXT.replace(": ", "")),
+			tooltipConfig));
+		add(speakingGroupHeader);
+
+		WebMarkupContainer understandingGroupHeader = new WebMarkupContainer("understandingGroupHeader");
+		understandingGroupHeader.add(new TooltipBehavior(Model.of(
+			"Q9: " + SituationAnalysisModel.Q9_PRE_TEXT.replace(": ", "")),
+			tooltipConfig));
+		add(understandingGroupHeader);
+
+		WebMarkupContainer easeGroupHeader = new WebMarkupContainer("easeGroupHeader");
+		easeGroupHeader.add(new TooltipBehavior(Model.of(
+			"Q7 (Post): " + SituationAnalysisModel.Q7_POST_TEXT.replace(": ", "")
+				+ "<br/>(Values inverted: higher = easier)"),
+			tooltipConfig));
+		add(easeGroupHeader);
+
+		WebMarkupContainer textPreGroupHeader = new WebMarkupContainer("textPreGroupHeader");
+		textPreGroupHeader.add(new TooltipBehavior(Model.of(
+			"Free-text responses from the pre-survey"),
+			tooltipConfig));
+		add(textPreGroupHeader);
+
+		WebMarkupContainer textPostGroupHeader = new WebMarkupContainer("textPostGroupHeader");
+		textPostGroupHeader.add(new TooltipBehavior(Model.of(
+			"Free-text responses from the post-survey"),
+			tooltipConfig));
+		add(textPostGroupHeader);
+
 		// Situation name headers - Speaking group
-		add(new ListView<>("speakingHeaders", data.getSituationNames())
+		add(new ListView<>("speakingHeaders", data.getSpeakingHeaderInfos())
 		{
 			@Override
-			protected void populateItem(ListItem<String> item)
+			protected void populateItem(ListItem<HeaderInfo> item)
 			{
-				item.add(new Label("situationName", item.getModelObject()));
+				HeaderInfo info = item.getModelObject();
+				item.add(new Label("situationName", info.label()));
+				item.add(new Label("questionNumber", info.questionNumber()));
+				item.add(new TooltipBehavior(Model.of(info.tooltip().replace("\n", "<br/>")), tooltipConfig));
 			}
 		});
 
 		// Situation name headers - Understanding group
-		add(new ListView<>("understandingHeaders", data.getSituationNames())
+		add(new ListView<>("understandingHeaders", data.getUnderstandingHeaderInfos())
 		{
 			@Override
-			protected void populateItem(ListItem<String> item)
+			protected void populateItem(ListItem<HeaderInfo> item)
 			{
-				item.add(new Label("situationName", item.getModelObject()));
+				HeaderInfo info = item.getModelObject();
+				item.add(new Label("situationName", info.label()));
+				item.add(new Label("questionNumber", info.questionNumber()));
+				item.add(new TooltipBehavior(Model.of(info.tooltip().replace("\n", "<br/>")), tooltipConfig));
 			}
 		});
 
 		// Situation name headers - Ease group
-		add(new ListView<>("easeHeaders", data.getSituationNames())
+		add(new ListView<>("easeHeaders", data.getEaseHeaderInfos())
 		{
 			@Override
-			protected void populateItem(ListItem<String> item)
+			protected void populateItem(ListItem<HeaderInfo> item)
 			{
-				item.add(new Label("situationName", item.getModelObject()));
+				HeaderInfo info = item.getModelObject();
+				item.add(new Label("situationName", info.label()));
+				item.add(new Label("questionNumber", info.questionNumber()));
+				item.add(new TooltipBehavior(Model.of(info.tooltip().replace("\n", "<br/>")), tooltipConfig));
 			}
 		});
 
-		// Text answer column headers
-		add(new ListView<>("textHeaders", data.getTextColumnLabels())
+		// Text answer column headers with tooltips
+		add(new ListView<>("textHeaders", data.getTextHeaderInfos())
 		{
 			@Override
-			protected void populateItem(ListItem<String> item)
+			protected void populateItem(ListItem<HeaderInfo> item)
 			{
-				item.add(new Label("headerLabel", item.getModelObject()));
+				HeaderInfo info = item.getModelObject();
+				item.add(new Label("headerLabel", info.label()));
+				item.add(new TooltipBehavior(Model.of(info.tooltip()), tooltipConfig));
 				// Apply CSS class based on position (first 5 are pre, rest are post)
 				String cssClass = item.getIndex() < 5 ? "header-text-pre" : "header-text-post";
 				item.add(AttributeModifier.append("class", cssClass));

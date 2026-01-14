@@ -276,6 +276,20 @@
         text-align: center;
         background-color: #388e3c;
     }
+
+    /* Question number styling in headers */
+    .situation-table th .question-number {
+        display: block;
+        font-size: 9px;
+        font-weight: normal;
+        opacity: 0.8;
+        margin-top: 2px;
+    }
+
+    /* Cursor pointer for tooltip headers */
+    .situation-table th[data-bs-toggle="tooltip"] {
+        cursor: help;
+    }
 </style>
 </wicket:head>
 </head>
@@ -291,20 +305,29 @@
             <!-- Group header row -->
             <tr>
                 <th class="sticky-col" rowspan="2">Student</th>
-                <th colspan="11" class="header-group">Speaking Confidence (Q7) &rarr; Ability (Q6)</th>
-                <th colspan="11" class="header-group-understanding">Understanding (Q9)</th>
-                <th colspan="11" class="header-group-ease">Ease (Q7 Inv)</th>
-                <th colspan="5" class="header-group-text-pre">Pre-Survey Text Answers</th>
-                <th colspan="8" class="header-group-text-post">Post-Survey Text Answers</th>
+                <th colspan="11" class="header-group" wicket:id="speakingGroupHeader">Speaking Confidence (Q7) &rarr; Ability (Q6)</th>
+                <th colspan="11" class="header-group-understanding" wicket:id="understandingGroupHeader">Understanding (Q9)</th>
+                <th colspan="11" class="header-group-ease" wicket:id="easeGroupHeader">Ease (Q7 Inv)</th>
+                <th colspan="5" class="header-group-text-pre" wicket:id="textPreGroupHeader">Pre-Survey Text Answers</th>
+                <th colspan="8" class="header-group-text-post" wicket:id="textPostGroupHeader">Post-Survey Text Answers</th>
             </tr>
             <!-- Situation names row -->
             <tr>
                 <!-- Speaking situation headers -->
-                <th wicket:id="speakingHeaders"><span wicket:id="situationName"></span></th>
+                <th wicket:id="speakingHeaders">
+                    <span wicket:id="situationName"></span>
+                    <span class="question-number" wicket:id="questionNumber"></span>
+                </th>
                 <!-- Understanding situation headers -->
-                <th wicket:id="understandingHeaders"><span wicket:id="situationName"></span></th>
+                <th wicket:id="understandingHeaders">
+                    <span wicket:id="situationName"></span>
+                    <span class="question-number" wicket:id="questionNumber"></span>
+                </th>
                 <!-- Ease situation headers -->
-                <th wicket:id="easeHeaders"><span wicket:id="situationName"></span></th>
+                <th wicket:id="easeHeaders">
+                    <span wicket:id="situationName"></span>
+                    <span class="question-number" wicket:id="questionNumber"></span>
+                </th>
                 <!-- Text answer column headers -->
                 <th wicket:id="textHeaders"><span wicket:id="headerLabel"></span></th>
             </tr>

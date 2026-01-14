@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import org.kusalainstitute.surveys.pojo.PostSurveyResponse;
 import org.kusalainstitute.surveys.pojo.PreSurveyResponse;
@@ -21,6 +22,56 @@ public class SituationAnalysisModel implements Serializable
 	 */
 	public static final List<String> SITUATION_NAMES = List.of("Directions", "Healthcare", "Authorities", "Job Interview",
 		"Informal", "Children Education", "Landlord", "Social Events", "Local Services", "Support Orgs", "Shopping");
+
+	/**
+	 * Full descriptions of all 11 situations (translated from French survey).
+	 */
+	public static final List<String> SITUATION_DESCRIPTIONS = List.of(
+		"Asking for or giving directions in the street",
+		"Talking to healthcare workers (doctor, nurse, pharmacist)",
+		"Communicating with government agencies (police, immigration, public services)",
+		"Having a job interview in English",
+		"Informal conversations with friends, family, or colleagues",
+		"Communicating with children's school staff (teachers, administration)",
+		"Communicating with landlord or property management",
+		"Participating in social events or community gatherings",
+		"Communicating with local service providers (utilities, banks, shops)",
+		"Communicating with support organizations (NGOs, charities, community groups)",
+		"Shopping, reading labels, seeking product information");
+
+	/**
+	 * Question text for Pre-Survey Q7 (Speaking Confidence).
+	 */
+	public static final String Q7_PRE_TEXT = "Please rate your confidence level for SPEAKING English in: ";
+
+	/**
+	 * Question text for Pre-Survey Q9 (Understanding Confidence).
+	 */
+	public static final String Q9_PRE_TEXT = "Please rate your confidence level for UNDERSTANDING English in: ";
+
+	/**
+	 * Question text for Post-Survey Q6 (Speaking Ability).
+	 */
+	public static final String Q6_POST_TEXT = "Please rate your ability to SPEAK English in: ";
+
+	/**
+	 * Question text for Post-Survey Q7 (Difficulty Expressing).
+	 */
+	public static final String Q7_POST_TEXT = "Please rate the difficulty of EXPRESSING yourself in: ";
+
+	/**
+	 * Header information for table column headers, including label, question number, and tooltip.
+	 *
+	 * @param label
+	 *            the short situation name displayed in the header
+	 * @param questionNumber
+	 *            the question number (e.g., "Q7→Q6.1", "Q9.1")
+	 * @param tooltip
+	 *            the full question text for the tooltip
+	 */
+	public record HeaderInfo(String label, String questionNumber, String tooltip) implements Serializable
+	{
+	}
 
 	/**
 	 * Labels for text answer columns (5 pre-survey + 8 post-survey = 13 total).
@@ -41,6 +92,27 @@ public class SituationAnalysisModel implements Serializable
 		"Desired Resources (Post)",
 		"Interview Decline Reason (Post)",
 		"Additional Comments (Post)");
+
+	/**
+	 * Full question texts for text answer columns (translated from French survey). These are displayed
+	 * as tooltips on the column headers.
+	 */
+	public static final List<String> TEXT_COLUMN_FULL_QUESTIONS = List.of(
+		// Pre-survey (5)
+		"Q5: What is the most difficult thing about using English for you?",
+		"Q6: Why do you want to improve your English?",
+		"Q8: In what other situations would you like to speak English better?",
+		"Q10: What is the most difficult part about not being able to express yourself?",
+		"Q11: Please describe all situations where you could not speak well enough",
+		// Post-survey (8)
+		"Q5: What helped you the most during the program?",
+		"Q8: What was the most difficult thing overall?",
+		"Q9: What was the most difficult for finding a job?",
+		"Q10: Did you experience any emotional difficulties?",
+		"Q11: Did you avoid any situations because of English?",
+		"Q13: What additional resources would you like?",
+		"Q15: Why did you decline the interview?",
+		"Q17: Any additional comments?");
 
 	private final List<StudentRow> rows;
 	private final List<BigDecimal> speakingAverages;
@@ -380,6 +452,71 @@ public class SituationAnalysisModel implements Serializable
 	public List<String> getTextColumnLabels()
 	{
 		return TEXT_COLUMN_LABELS;
+	}
+
+	/**
+	 * Returns header information for Speaking columns. Speaking compares Pre Q7 (confidence) with
+	 * Post Q6 (ability), so the question number shows "Q7→Q6.n". Tooltip shows only situation
+	 * description since the common question text is shown in the group header.
+	 *
+	 * @return list of 11 HeaderInfo objects for speaking columns
+	 */
+	public List<HeaderInfo> getSpeakingHeaderInfos()
+	{
+		return IntStream.range(0, SITUATION_NAMES.size())
+			.mapToObj(i -> new HeaderInfo(
+				SITUATION_NAMES.get(i),
+				"Q7→Q6." + (i + 1),
+				SITUATION_DESCRIPTIONS.get(i)))
+			.toList();
+	}
+
+	/**
+	 * Returns header information for Understanding columns (Pre Q9 only). Tooltip shows only
+	 * situation description since the common question text is shown in the group header.
+	 *
+	 * @return list of 11 HeaderInfo objects for understanding columns
+	 */
+	public List<HeaderInfo> getUnderstandingHeaderInfos()
+	{
+		return IntStream.range(0, SITUATION_NAMES.size())
+			.mapToObj(i -> new HeaderInfo(
+				SITUATION_NAMES.get(i),
+				"Q9." + (i + 1),
+				SITUATION_DESCRIPTIONS.get(i)))
+			.toList();
+	}
+
+	/**
+	 * Returns header information for Ease columns (Post Q7 inverted). Tooltip shows only situation
+	 * description since the common question text is shown in the group header.
+	 *
+	 * @return list of 11 HeaderInfo objects for ease columns
+	 */
+	public List<HeaderInfo> getEaseHeaderInfos()
+	{
+		return IntStream.range(0, SITUATION_NAMES.size())
+			.mapToObj(i -> new HeaderInfo(
+				SITUATION_NAMES.get(i),
+				"Q7." + (i + 1),
+				SITUATION_DESCRIPTIONS.get(i)))
+			.toList();
+	}
+
+	/**
+	 * Returns header information for text answer columns. Each column has a short label and a full
+	 * question text as tooltip.
+	 *
+	 * @return list of 13 HeaderInfo objects for text answer columns
+	 */
+	public List<HeaderInfo> getTextHeaderInfos()
+	{
+		return IntStream.range(0, TEXT_COLUMN_LABELS.size())
+			.mapToObj(i -> new HeaderInfo(
+				TEXT_COLUMN_LABELS.get(i),
+				null, // no question number for text columns
+				TEXT_COLUMN_FULL_QUESTIONS.get(i)))
+			.toList();
 	}
 
 	public List<StudentRow> getRows()

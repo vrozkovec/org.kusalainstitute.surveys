@@ -37,7 +37,7 @@ interface IDeeplApi
 	 * @return translation
 	 */
 	@GET("translate")
-	Call<TranslationResponse> tagSentence(@Query("text") String text, @Query("source_lang") DeeplSourceLanguage sourceLanguage,
+	Call<TranslationResponse> translateSentence(@Query("text") String text, @Query("source_lang") DeeplSourceLanguage sourceLanguage,
 		@Query("target_lang") DeeplTargetLanguage targetLanguage, @Query("split_sentences") DeeplBoolean splitSentences,
 		@Query("preserve_formatting") DeeplBoolean preserveFormatting);
 

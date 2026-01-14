@@ -54,7 +54,7 @@ public class Deepl implements IDeepl
 	public String translate(String text, DeeplSourceLanguage sourceLanguage, DeeplTargetLanguage targetLanguage,
 		boolean splitSentences, boolean preserverFormatting)
 	{
-		Call<TranslationResponse> call = deeplApi.tagSentence(text, sourceLanguage, targetLanguage, DeeplBoolean.of(splitSentences),
+		Call<TranslationResponse> call = deeplApi.translateSentence(text, sourceLanguage, targetLanguage, DeeplBoolean.of(splitSentences),
 			DeeplBoolean.of(preserverFormatting));
 
 		Response<TranslationResponse> response;
