@@ -8,6 +8,7 @@ import org.apache.wicket.settings.ExceptionSettings;
 import org.apache.wicket.util.lang.Bytes;
 import org.jdbi.v3.core.Jdbi;
 import org.kusalainstitute.surveys.config.SurveysModule;
+import org.kusalainstitute.surveys.wicket.pages.AnswersPage;
 import org.kusalainstitute.surveys.wicket.pages.HomePage;
 
 import com.google.inject.Guice;
@@ -63,6 +64,9 @@ public class SurveyApplication extends WebApplication
 		Bootstrap.install(this, settings);
 		getHeaderResponseDecorators()
 			.add(response -> new JavaScriptFilteredIntoFooterHeaderResponse(response, "footer-container"));
+
+		mountPage("answers", AnswersPage.class);
+
 	}
 
 	/**

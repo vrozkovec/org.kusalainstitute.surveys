@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns:wicket="http://wicket.apache.org">
+<head>
+<wicket:head>
+<style>
+    .open-ended-panel {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    .question-block {
+        margin-bottom: 30px;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #6c757d;
+    }
+
+    .question-block.pre-survey {
+        border-left-color: #2196f3;
+    }
+
+    .question-block.post-survey {
+        border-left-color: #4caf50;
+    }
+
+    .question-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+
+    .question-number {
+        font-size: 1.1em;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .survey-badge {
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 0.75em;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    .badge-pre {
+        background-color: #2196f3;
+        color: white;
+    }
+
+    .badge-post {
+        background-color: #4caf50;
+        color: white;
+    }
+
+    .answer-count {
+        font-size: 0.85em;
+        color: #666;
+        margin-left: auto;
+    }
+
+    .question-text {
+        font-size: 1em;
+        color: #495057;
+        margin-bottom: 15px;
+        font-style: italic;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .answers-list {
+        list-style-type: disc;
+        padding-left: 25px;
+        margin: 0;
+    }
+
+    .answers-list li {
+        margin-bottom: 10px;
+        line-height: 1.5;
+        color: #333;
+    }
+
+    .answers-list li:last-child {
+        margin-bottom: 0;
+    }
+
+    .no-answers {
+        color: #999;
+        font-style: italic;
+    }
+</style>
+</wicket:head>
+</head>
+<body>
+<wicket:panel>
+
+<div class="open-ended-panel">
+    <h3>Open-Ended Questions Summary</h3>
+    <p><em>All non-empty responses grouped by question (anonymous).</em></p>
+
+    <div wicket:id="questions" class="question-block">
+        <div class="question-header">
+            <span class="question-number" wicket:id="questionNumber"></span>
+            <span wicket:id="surveyType"></span>
+            <span class="answer-count">(<span wicket:id="answerCount"></span> responses)</span>
+        </div>
+        <div class="question-text" wicket:id="questionText"></div>
+        <ul class="answers-list">
+            <li wicket:id="answers">
+                <span wicket:id="answerText"></span>
+            </li>
+        </ul>
+    </div>
+</div>
+
+</wicket:panel>
+</body>
+</html>

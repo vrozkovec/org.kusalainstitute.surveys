@@ -23,17 +23,48 @@ public class PreSurveyResponse
 	private String sourceFile;
 	private Integer rowNumber;
 
-	// Demographics (Q1-Q6)
+	/**
+	 * Q1: Comment avez-vous découvert l'Institut Kusala ?<br>
+	 * How did you find out about Kusala Institute?
+	 */
 	private HowFoundKusala howFoundKusala;
+	/**
+	 * Q2: Depuis combien de temps étudiez-vous l'anglais avec un enseignant, soit en classe soit en ligne, de manière
+	 * régulière ou irrégulière ?<br>
+	 * How long have you been studying English with a teacher, either in class or online, regularly or irregularly?
+	 */
 	private StudyDuration studyWithTeacherDuration;
+	/**
+	 * Q3: Depuis combien de temps étudiez-vous l'anglais par vous-même avec un professeur particulier, un partenaire
+	 * d'échange linguistique, des sites web ou une application, que ce soit de façon régulière ou irrégulière ?<br>
+	 * How long have you been studying English on your own with a private teacher, language exchange partner, websites
+	 * or an app, regularly or irregularly?
+	 */
 	private StudyDuration studyOnOwnDuration;
+	/**
+	 * Q4: Si vous êtes le parent ou le tuteur légal d'enfants en âge scolaire, quels sont leurs âges ?<br>
+	 * If you are the parent or legal guardian of school-age children, what are their ages?
+	 */
 	private Set<ChildrenAgeGroup> childrenAges;
+
+	/**
+	 * Q5: Qu'est-ce qui est le plus difficile pour vous d'utiliser l'anglais ?<br>
+	 * What is the most difficult thing about using English for you?
+	 */
 	private String mostDifficultThingOriginal;
 	private String mostDifficultThingTranslated;
+	/**
+	 * Q6: Pourquoi voulez-vous améliorer votre anglais ?<br>
+	 * Why do you want to improve your English?
+	 */
 	private String whyImproveEnglishOriginal;
 	private String whyImproveEnglishTranslated;
 
-	// Speaking confidence Q7 (11 situations) - 1-4 scale
+	/*
+	 * Q7: Dans quelle mesure pouvez-vous parler avec assurance aux gens dans les situations suivantes ?<br>
+	 * How confidently can you speak to people in the following situations?<br>
+	 * (11 situations, 1-4 scale: 1=Very confidently, 2=Somewhat confidently, 3=Not confidently, 4=I cannot speak)
+	 */
 	private Integer speakDirections;
 	private Integer speakHealthcare;
 	private Integer speakAuthorities;
@@ -46,11 +77,18 @@ public class PreSurveyResponse
 	private Integer speakSupportOrgs;
 	private Integer speakShopping;
 
-	// Q8 Free text
+	/**
+	 * Q8: Dans quelles autres situations n'êtes-vous pas capable de parler suffisamment bien l'anglais ?<br>
+	 * In what other situations are you unable to speak English well enough?
+	 */
 	private String otherSituationsOriginal;
 	private String otherSituationsTranslated;
 
-	// Understanding confidence Q9 (11 situations)
+	/*
+	 * Q9: Dans quelle mesure comprenez-vous ce que les gens disent dans les situations suivantes ?<br>
+	 * How well do you understand what people say in the following situations?<br>
+	 * (11 situations, 1-4 scale: 1=Very well, 2=Somewhat well, 3=Not very well, 4=I cannot understand)
+	 */
 	private Integer understandDirections;
 	private Integer understandHealthcare;
 	private Integer understandAuthorities;
@@ -63,11 +101,19 @@ public class PreSurveyResponse
 	private Integer understandSupportOrgs;
 	private Integer understandShopping;
 
-	// Q10 Free text
+	/**
+	 * Q10: Qu'est-ce qui est le plus difficile quand vous ne pouvez pas vous exprimer ? Expliquez pourquoi.<br>
+	 * What is the most difficult part when you cannot express yourself? Please explain why.
+	 */
 	private String difficultPartOriginal;
 	private String difficultPartTranslated;
 
-	// Q11 Free text
+	/**
+	 * Q11: Veuillez décrire toutes les situations où vous n'avez pas pu parler assez bien et ce que vous vouliez dire
+	 * et discuter (de la manière la plus détaillée possible).<br>
+	 * Please describe all situations where you could not speak well enough and what you wanted to say and discuss (in
+	 * as much detail as possible).
+	 */
 	private String describeSituationsOriginal;
 	private String describeSituationsTranslated;
 

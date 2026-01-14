@@ -74,7 +74,7 @@ public class SituationAnalysisModel implements Serializable
 	}
 
 	/**
-	 * Labels for text answer columns (5 pre-survey + 8 post-survey = 13 total).
+	 * Labels for text answer columns (5 pre-survey + 9 post-survey = 14 total).
 	 */
 	public static final List<String> TEXT_COLUMN_LABELS = List.of(
 		// Pre-survey (5)
@@ -83,12 +83,13 @@ public class SituationAnalysisModel implements Serializable
 		"Other Situations (Pre)",
 		"Difficult Part (Pre)",
 		"Describe Situations (Pre)",
-		// Post-survey (8)
+		// Post-survey (9)
 		"What Helped Most (Post)",
 		"Most Difficult Overall (Post)",
 		"Most Difficult For Job (Post)",
 		"Emotional Difficulties (Post)",
 		"Avoided Situations (Post)",
+		"Has Enough Support (Post)",
 		"Desired Resources (Post)",
 		"Interview Decline Reason (Post)",
 		"Additional Comments (Post)");
@@ -104,15 +105,70 @@ public class SituationAnalysisModel implements Serializable
 		"Q8: In what other situations would you like to speak English better?",
 		"Q10: What is the most difficult part about not being able to express yourself?",
 		"Q11: Please describe all situations where you could not speak well enough",
-		// Post-survey (8)
+		// Post-survey (9)
 		"Q5: What helped you the most during the program?",
 		"Q8: What was the most difficult thing overall?",
 		"Q9: What was the most difficult for finding a job?",
 		"Q10: Did you experience any emotional difficulties?",
 		"Q11: Did you avoid any situations because of English?",
+		"Q12: Do you have enough support from people to help you learn English?",
 		"Q13: What additional resources would you like?",
 		"Q15: Why did you decline the interview?",
 		"Q17: Any additional comments?");
+
+	/**
+	 * Full question texts for open-ended questions display panel (14 total: 5 PRE + 9 POST). These
+	 * are the complete question texts for display in the qualitative summary.
+	 */
+	public static final List<OpenEndedQuestionInfo> OPEN_ENDED_QUESTIONS = List.of(
+		// Pre-survey (5)
+		new OpenEndedQuestionInfo("Q5", "What is the most difficult thing about using English for you?", true, 0),
+		new OpenEndedQuestionInfo("Q6", "Why do you want to improve your English?", true, 1),
+		new OpenEndedQuestionInfo("Q8", "In what other situations are you unable to speak English well enough?", true, 2),
+		new OpenEndedQuestionInfo("Q10",
+			"What is the most difficult part when you cannot express yourself? Please explain why.", true, 3),
+		new OpenEndedQuestionInfo("Q11",
+			"Please describe all situations where you could not speak well enough and what you wanted to say and discuss (in as much detail as possible).",
+			true, 4),
+		// Post-survey (9)
+		new OpenEndedQuestionInfo("Q5",
+			"Since you have been using the app, what has helped you the most? Please write as much as possible so we know how to explain the app's benefits to others.",
+			false, 5),
+		new OpenEndedQuestionInfo("Q8",
+			"What is the most difficult part when you cannot express yourself? Please explain why.", false, 6),
+		new OpenEndedQuestionInfo("Q9",
+			"In your opinion, what is the most difficult thing about learning English well enough to find a job or feel part of the community?",
+			false, 7),
+		new OpenEndedQuestionInfo("Q10",
+			"Besides learning new grammar and vocabulary, do you find language learning difficult in other ways? For example, in a way that affects your emotions and social experiences? Please explain.",
+			false, 8),
+		new OpenEndedQuestionInfo("Q11",
+			"Have you ever avoided a situation because you were not comfortable with your level of English? Please describe the circumstances.",
+			false, 9),
+		new OpenEndedQuestionInfo("Q12", "Do you have enough support from people to help you learn English?", false, 10),
+		new OpenEndedQuestionInfo("Q13",
+			"Please describe the types of language resources you would like to have to help you improve faster.", false, 11),
+		new OpenEndedQuestionInfo("Q15",
+			"If you answered \"No\" to the previous question, please tell us the reason why you do not wish to participate in a telephone or video interview.",
+			false, 12),
+		new OpenEndedQuestionInfo("Q17", "Is there anything else you would like to share?", false, 13));
+
+	/**
+	 * Information about an open-ended question for the qualitative display panel.
+	 *
+	 * @param questionNumber
+	 *            the question number (e.g., "Q5", "Q12")
+	 * @param questionText
+	 *            the full question text
+	 * @param isPreSurvey
+	 *            true for pre-survey, false for post-survey
+	 * @param textAnswerIndex
+	 *            the index into the textAnswers list in StudentRow
+	 */
+	public record OpenEndedQuestionInfo(String questionNumber, String questionText, boolean isPreSurvey,
+		int textAnswerIndex) implements Serializable
+	{
+	}
 
 	private final List<StudentRow> rows;
 	private final List<BigDecimal> speakingAverages;
@@ -312,14 +368,14 @@ public class SituationAnalysisModel implements Serializable
 	}
 
 	/**
-	 * Builds text answer data from pre and post survey responses. Returns a list of 13
-	 * TextAnswerData objects (5 pre-survey + 8 post-survey) in the same order as TEXT_COLUMN_LABELS.
+	 * Builds text answer data from pre and post survey responses. Returns a list of 14
+	 * TextAnswerData objects (5 pre-survey + 9 post-survey) in the same order as TEXT_COLUMN_LABELS.
 	 *
 	 * @param pre
 	 *            the pre-survey response
 	 * @param post
 	 *            the post-survey response
-	 * @return list of 13 TextAnswerData objects
+	 * @return list of 14 TextAnswerData objects
 	 */
 	private static List<TextAnswerData> buildTextAnswers(PreSurveyResponse pre, PostSurveyResponse post)
 	{
@@ -330,12 +386,13 @@ public class SituationAnalysisModel implements Serializable
 			TextAnswerData.pre("Other Situations", pre.getOtherSituationsTranslated()),
 			TextAnswerData.pre("Difficult Part", pre.getDifficultPartTranslated()),
 			TextAnswerData.pre("Describe Situations", pre.getDescribeSituationsTranslated()),
-			// Post-survey (8)
+			// Post-survey (9)
 			TextAnswerData.post("What Helped Most", post.getWhatHelpedMostTranslated()),
 			TextAnswerData.post("Most Difficult Overall", post.getMostDifficultOverallTranslated()),
 			TextAnswerData.post("Most Difficult For Job", post.getMostDifficultForJobTranslated()),
 			TextAnswerData.post("Emotional Difficulties", post.getEmotionalDifficultiesTranslated()),
 			TextAnswerData.post("Avoided Situations", post.getAvoidedSituationsTranslated()),
+			TextAnswerData.post("Has Enough Support", post.getHasEnoughSupport()),
 			TextAnswerData.post("Desired Resources", post.getDesiredResourcesTranslated()),
 			TextAnswerData.post("Interview Decline Reason", post.getInterviewDeclineReasonTranslated()),
 			TextAnswerData.post("Additional Comments", post.getAdditionalCommentsTranslated()));
@@ -517,6 +574,45 @@ public class SituationAnalysisModel implements Serializable
 				null, // no question number for text columns
 				TEXT_COLUMN_FULL_QUESTIONS.get(i)))
 			.toList();
+	}
+
+	/**
+	 * Returns all open-ended questions with their answers, grouped by question. Collects all
+	 * non-empty answers from all students for each question. This is used for the qualitative
+	 * summary panel that shows anonymous responses grouped by question.
+	 *
+	 * @return list of OpenEndedQuestionData objects with answers
+	 */
+	public List<OpenEndedQuestionData> getOpenEndedQuestions()
+	{
+		List<OpenEndedQuestionData> result = new ArrayList<>();
+
+		for (OpenEndedQuestionInfo questionInfo : OPEN_ENDED_QUESTIONS)
+		{
+			List<String> answers = new ArrayList<>();
+
+			for (StudentRow row : rows)
+			{
+				List<TextAnswerData> textAnswers = row.textAnswers();
+				if (textAnswers != null && questionInfo.textAnswerIndex() < textAnswers.size())
+				{
+					TextAnswerData answerData = textAnswers.get(questionInfo.textAnswerIndex());
+					String answer = answerData.value();
+					if (answer != null && !answer.isBlank())
+					{
+						answers.add(answer.trim());
+					}
+				}
+			}
+
+			result.add(new OpenEndedQuestionData(
+				questionInfo.questionNumber(),
+				questionInfo.questionText(),
+				questionInfo.isPreSurvey(),
+				answers));
+		}
+
+		return result;
 	}
 
 	public List<StudentRow> getRows()

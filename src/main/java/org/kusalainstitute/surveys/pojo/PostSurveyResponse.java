@@ -24,17 +24,41 @@ public class PostSurveyResponse
 	private String sourceFile;
 	private Integer rowNumber;
 
-	// App usage Q1-Q4
+	/**
+	 * Q1: Depuis combien de temps utilisez-vous l'application pour apprendre l'anglais ?<br>
+	 * How long have you been using the app to learn English?
+	 */
 	private AppTimePerSession appUsageDuration;
+	/**
+	 * Q2: Combien de temps passez-vous sur l'application lors de chaque session ?<br>
+	 * How much time do you spend on the app at each session?
+	 */
 	private AppTimePerSession appTimePerSession;
+	/**
+	 * Q3: A quelle fréquence utilisez-vous l'application ?<br>
+	 * How often do you use the app?
+	 */
 	private AppFrequency appFrequency;
+	/**
+	 * Q4: Avez-vous vu des progrès depuis que vous avez commencé à utiliser l'application ?<br>
+	 * Have you seen progress since you started using the app?
+	 */
 	private ProgressAssessment progressAssessment;
 
-	// Q5 Free text
+	/**
+	 * Q5: Depuis que vous utilisez l'application, qu'est-ce qui vous a le plus aidé ? Écrivez autant que possible afin
+	 * que nous sachions comment expliquer les avantages de l'application à d'autres personnes.<br>
+	 * Since you have been using the app, what has helped you the most? Please write as much as possible so we know how
+	 * to explain the app's benefits to others.
+	 */
 	private String whatHelpedMostOriginal;
 	private String whatHelpedMostTranslated;
 
-	// Speaking ability Q6 (11 situations) - 1-4 scale
+	/*
+	 * Q6: Évaluez votre capacité à parler anglais dans les situations suivantes.<br>
+	 * Rate your ability to speak English in the following situations.
+	 * (11 situations, 1-4 scale: 1=Very well, 2=Somewhat well, 3=Not very well, 4=I cannot speak)
+	 */
 	private Integer speakDirections;
 	private Integer speakHealthcare;
 	private Integer speakAuthorities;
@@ -47,7 +71,11 @@ public class PostSurveyResponse
 	private Integer speakSupportOrgs;
 	private Integer speakShopping;
 
-	// Q7 Difficulty expressing (11 situations) - 1-5 scale
+	/*
+	 * Q7: À quel point est-il difficile de s'exprimer dans les situations suivantes ?<br>
+	 * How hard is it to express yourself in the following situations?
+	 * (11 situations, 1-5 scale: 1=Very easy, 2=Easy, 3=Somewhat difficult, 4=Difficult, 5=Very difficult)
+	 */
 	private Integer difficultyDirections;
 	private Integer difficultyHealthcare;
 	private Integer difficultyAuthorities;
@@ -60,37 +88,78 @@ public class PostSurveyResponse
 	private Integer difficultySupportOrgs;
 	private Integer difficultyShopping;
 
-	// Q8 Free text
+	/**
+	 * Q8: Qu'est-ce qui est le plus difficile quand vous ne pouvez pas vous exprimer ? Expliquez pourquoi.<br>
+	 * What is the most difficult part when you cannot express yourself? Please explain why.
+	 */
 	private String mostDifficultOverallOriginal;
 	private String mostDifficultOverallTranslated;
 
-	// Q9 Free text
+	/**
+	 * Q9: Selon vous, quelle est la chose la plus difficile pour apprendre suffisamment bien l'anglais pour trouver un
+	 * emploi ou se sentir intégré dans la communauté ?<br>
+	 * In your opinion, what is the most difficult thing about learning English well enough to find a job or feel part
+	 * of the community?
+	 */
 	private String mostDifficultForJobOriginal;
 	private String mostDifficultForJobTranslated;
 
-	// Q10 Free text
+	/**
+	 * Q10: Outre l'apprentissage de la grammaire et du vocabulaire, trouvez-vous l'apprentissage des langues difficile
+	 * d'autres manières ? Par exemple, d'une manière qui affecte vos émotions et vos expériences sociales ? Expliquez.<br>
+	 * Besides learning new grammar and vocabulary, do you find language learning difficult in other ways? For example,
+	 * in a way that affects your emotions and social experiences? Please explain.
+	 */
 	private String emotionalDifficultiesOriginal;
 	private String emotionalDifficultiesTranslated;
 
-	// Q11 Free text
+	/**
+	 * Q11: Avez-vous déjà évité une situation parce que vous n'étiez pas à l'aise avec votre niveau d'anglais ?
+	 * Décrivez les circonstances.<br>
+	 * Have you ever avoided a situation because you were not comfortable with your level of English? Please describe
+	 * the circumstances.
+	 */
 	private String avoidedSituationsOriginal;
 	private String avoidedSituationsTranslated;
 
-	// Q12
+	/**
+	 * Q12: Avez-vous suffisamment de soutien de la part des gens pour vous aider à apprendre l'anglais ?<br>
+	 * Do you have enough support from people to help you learn English?
+	 */
 	private String hasEnoughSupport;
 
-	// Q13 Free text
+	/**
+	 * Q13: Décrivez les types de ressources linguistiques que vous aimeriez avoir pour vous aider à progresser plus
+	 * rapidement.<br>
+	 * Please describe the types of language resources you would like to have to help you improve faster.
+	 */
 	private String desiredResourcesOriginal;
 	private String desiredResourcesTranslated;
 
-	// Q14-16 Interview questions
+	/**
+	 * Q14: Seriez-vous prêt(e) à participer à un entretien téléphonique ou vidéo avec nous ?<br>
+	 * Would you be willing to participate in a telephone or video interview with us?
+	 */
 	private YesNo willingToInterview;
+	/**
+	 * Q15: Si vous avez répondu « Non » à la question précédente, veuillez nous indiquer la raison pour laquelle vous
+	 * ne souhaitez pas participer à un entretien téléphonique ou vidéo.<br>
+	 * If you answered "No" to the previous question, please tell us the reason why you do not wish to participate in a
+	 * telephone or video interview.
+	 */
 	private String interviewDeclineReasonOriginal;
 	private String interviewDeclineReasonTranslated;
+	/**
+	 * Q16: Comment préférez-vous faire votre entretien ?<br>
+	 * How do you prefer to do your interview?
+	 */
 	private InterviewTypePreference preferredInterviewType;
 	private String contactInfo;
 
-	// Q17 Free text
+	/**
+	 * Q17: Y a-t-il autre chose que vous aimeriez partager ?<br>
+	 * Is there anything else you would like to share?
+	 */
 	private String additionalCommentsOriginal;
 	private String additionalCommentsTranslated;
 
