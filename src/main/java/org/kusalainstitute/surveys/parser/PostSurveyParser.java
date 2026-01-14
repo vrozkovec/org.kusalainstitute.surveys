@@ -195,7 +195,7 @@ public class PostSurveyParser extends ExcelParser
 		response.setMostDifficultForJobOriginal(getStringValue(row, COL_DIFFICULT_JOB));
 		response.setEmotionalDifficultiesOriginal(getStringValue(row, COL_EMOTIONAL));
 		response.setAvoidedSituationsOriginal(getStringValue(row, COL_AVOIDED));
-		response.setHasEnoughSupport(getStringValue(row, COL_SUPPORT));
+		response.setHasEnoughSupportOriginal(getStringValue(row, COL_SUPPORT));
 		response.setDesiredResourcesOriginal(getStringValue(row, COL_RESOURCES));
 		response.setWillingToInterview(yesNoMapper.map(getStringValue(row, COL_WILLING_INTERVIEW)));
 		response.setInterviewDeclineReasonOriginal(getStringValue(row, COL_DECLINE_REASON));

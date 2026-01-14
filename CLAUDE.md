@@ -57,7 +57,7 @@ src/main/java/org/kusalainstitute/surveys/
 | Q9 | Most difficult for job | Free text |
 | Q10 | Emotional difficulties | Free text |
 | Q11 | Avoided situations | Free text |
-| Q12 | Has enough support | Text |
+| Q12 | Has enough support | Free text |
 | Q13 | Desired resources | Free text |
 | Q14 | Willing to interview | Yes/No |
 | Q15 | Interview decline reason | Free text |
@@ -94,7 +94,7 @@ The `SituationAnalysisPanel` displays a comprehensive table with:
    - Values inverted: higher = easier to express
    - Question numbers: Q7.1 through Q7.11
 
-4. **Text Answers** (13 columns): 5 pre-survey + 8 post-survey free text responses
+4. **Text Answers** (14 columns): 5 pre-survey + 9 post-survey free text responses
 
 ### Key Classes
 - `SituationAnalysisModel` - Main data model with all analysis data
@@ -103,6 +103,8 @@ The `SituationAnalysisPanel` displays a comprehensive table with:
 - `SingleValueData` - Single value data for Understanding/Ease columns
 - `TextAnswerData` - Text answer data with pre/post styling
 - `HeaderInfo` - Header display info with label, question number, and tooltip
+- `OpenEndedQuestionData` - Record for open-ended question with anonymous answers
+- `OpenEndedQuestionsPanel` - Panel displaying qualitative summary grouped by question
 
 ## Data Files
 
@@ -114,6 +116,26 @@ Data files are located in the `data/` directory:
 ## Translation Service
 
 Free text answers are translated from French to English using the DeepL API. Translations are cached in `translations.properties` using SHA256 hashes as keys.
+
+## Free Text Field Pattern
+
+All free-text survey questions follow a consistent naming pattern:
+- `fieldOriginal` - Raw text from Excel (typically French)
+- `fieldTranslated` - English translation via DeepL
+
+Example fields in `PostSurveyResponse`:
+- `whatHelpedMostOriginal` / `whatHelpedMostTranslated`
+- `mostDifficultOverallOriginal` / `mostDifficultOverallTranslated`
+- `hasEnoughSupportOriginal` / `hasEnoughSupportTranslated`
+
+The `TranslationService.translateAll()` method populates all `*Translated` fields.
+
+## Import Process
+
+1. **Excel Parsing**: `PostSurveyParser.parseRow()` extracts data from Excel columns
+2. **Translation**: `TranslationService.translateAll()` translates French text to English
+3. **Database Storage**: `PostSurveyDao.insert()` persists both original and translated text
+4. **Caching**: Translations are cached in `data/translations.properties` (SHA256 hash → translation)
 
 ## Running the Application
 

@@ -132,6 +132,7 @@ public class TranslationService
 		response.setMostDifficultForJobTranslated(translate(response.getMostDifficultForJobOriginal()));
 		response.setEmotionalDifficultiesTranslated(translate(response.getEmotionalDifficultiesOriginal()));
 		response.setAvoidedSituationsTranslated(translate(response.getAvoidedSituationsOriginal()));
+		response.setHasEnoughSupportTranslated(translate(response.getHasEnoughSupportOriginal()));
 		response.setDesiredResourcesTranslated(translate(response.getDesiredResourcesOriginal()));
 		response.setInterviewDeclineReasonTranslated(translate(response.getInterviewDeclineReasonOriginal()));
 		response.setAdditionalCommentsTranslated(translate(response.getAdditionalCommentsOriginal()));

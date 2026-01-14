@@ -142,8 +142,9 @@ create table post_survey_response (
     avoided_situations_original text,
     avoided_situations_translated text,
 
-    -- Q12
-    has_enough_support varchar(255),
+    -- Q12 Free text
+    has_enough_support_original text,
+    has_enough_support_translated text,
 
     -- Q13 Free text
     desired_resources_original text,

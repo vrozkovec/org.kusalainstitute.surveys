@@ -126,7 +126,8 @@ public class PostSurveyResponse
 	 * Q12: Avez-vous suffisamment de soutien de la part des gens pour vous aider à apprendre l'anglais ?<br>
 	 * Do you have enough support from people to help you learn English?
 	 */
-	private String hasEnoughSupport;
+	private String hasEnoughSupportOriginal;
+	private String hasEnoughSupportTranslated;
 
 	/**
 	 * Q13: Décrivez les types de ressources linguistiques que vous aimeriez avoir pour vous aider à progresser plus
@@ -653,14 +654,24 @@ public class PostSurveyResponse
 		this.avoidedSituationsTranslated = avoidedSituationsTranslated;
 	}
 
-	public String getHasEnoughSupport()
+	public String getHasEnoughSupportOriginal()
 	{
-		return hasEnoughSupport;
+		return hasEnoughSupportOriginal;
 	}
 
-	public void setHasEnoughSupport(String hasEnoughSupport)
+	public void setHasEnoughSupportOriginal(String hasEnoughSupportOriginal)
 	{
-		this.hasEnoughSupport = hasEnoughSupport;
+		this.hasEnoughSupportOriginal = hasEnoughSupportOriginal;
+	}
+
+	public String getHasEnoughSupportTranslated()
+	{
+		return hasEnoughSupportTranslated;
+	}
+
+	public void setHasEnoughSupportTranslated(String hasEnoughSupportTranslated)
+	{
+		this.hasEnoughSupportTranslated = hasEnoughSupportTranslated;
 	}
 
 	public String getDesiredResourcesOriginal()

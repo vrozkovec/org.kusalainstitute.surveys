@@ -392,7 +392,7 @@ public class SituationAnalysisModel implements Serializable
 			TextAnswerData.post("Most Difficult For Job", post.getMostDifficultForJobTranslated()),
 			TextAnswerData.post("Emotional Difficulties", post.getEmotionalDifficultiesTranslated()),
 			TextAnswerData.post("Avoided Situations", post.getAvoidedSituationsTranslated()),
-			TextAnswerData.post("Has Enough Support", post.getHasEnoughSupport()),
+			TextAnswerData.post("Has Enough Support", post.getHasEnoughSupportTranslated()),
 			TextAnswerData.post("Desired Resources", post.getDesiredResourcesTranslated()),
 			TextAnswerData.post("Interview Decline Reason", post.getInterviewDeclineReasonTranslated()),
 			TextAnswerData.post("Additional Comments", post.getAdditionalCommentsTranslated()));
