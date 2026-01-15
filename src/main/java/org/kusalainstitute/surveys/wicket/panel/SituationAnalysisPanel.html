@@ -110,47 +110,43 @@
 	min-width: 70px;
 }
 
-.situation-table .bar-row {
+/* Brick-style rating visualization */
+.situation-table .brick-row {
 	display: flex;
 	align-items: center;
+	gap: 2px;
 	margin-bottom: 2px;
 	height: 8px;
 }
 
-.situation-table .single-bar-row {
+.situation-table .single-brick-row {
 	display: flex;
 	align-items: center;
+	gap: 2px;
 	height: 12px;
 }
 
-.situation-table .track {
-	flex-grow: 1;
-	background-color: #e9ecef;
+.situation-table .brick {
+	width: 15px;
 	height: 100%;
 	border-radius: 2px;
-	overflow: hidden;
-	margin-right: 5px;
-	position: relative;
+	background-color: #e9ecef;
 }
 
-.situation-table .fill-pre {
-	background-color: #adb5bd;
-	height: 100%;
+.situation-table .brick.active-pre {
+	background-color: #7FDBFF;
 }
 
-.situation-table .fill-post {
+.situation-table .brick.active-post {
 	background-color: #28a745;
-	height: 100%;
 }
 
-.situation-table .fill-understanding {
+.situation-table .brick.active-understanding {
 	background-color: #17a2b8;
-	height: 100%;
 }
 
-.situation-table .fill-ease {
+.situation-table .brick.active-ease {
 	background-color: #6f42c1;
-	height: 100%;
 }
 
 .situation-table .val-text {
@@ -396,16 +392,12 @@
 
 						<!-- Speaking situation cells (pre/post comparison) -->
 						<td class="viz-cell" wicket:id="speakingCells">
-							<div class="bar-row">
-								<div class="track">
-									<div class="fill-pre" wicket:id="preBar"></div>
-								</div>
+							<div class="brick-row">
+								<div class="brick" wicket:id="preBricks"></div>
 								<span class="val-text" wicket:id="preVal"></span>
 							</div>
-							<div class="bar-row">
-								<div class="track">
-									<div class="fill-post" wicket:id="postBar"></div>
-								</div>
+							<div class="brick-row">
+								<div class="brick" wicket:id="postBricks"></div>
 								<span class="val-text" wicket:id="postVal"></span>
 							</div>
 							<span class="delta" wicket:id="delta"></span>
@@ -413,20 +405,16 @@
 
 						<!-- Understanding situation cells (single value) -->
 						<td class="single-val-cell" wicket:id="understandingCells">
-							<div class="single-bar-row">
-								<div class="track">
-									<div class="fill-understanding" wicket:id="bar"></div>
-								</div>
+							<div class="single-brick-row">
+								<div class="brick" wicket:id="bricks"></div>
 								<span class="val-text" wicket:id="val"></span>
 							</div>
 						</td>
 
 						<!-- Ease situation cells (single value) -->
 						<td class="single-val-cell" wicket:id="easeCells">
-							<div class="single-bar-row">
-								<div class="track">
-									<div class="fill-ease" wicket:id="bar"></div>
-								</div>
+							<div class="single-brick-row">
+								<div class="brick" wicket:id="bricks"></div>
 								<span class="val-text" wicket:id="val"></span>
 							</div>
 						</td>

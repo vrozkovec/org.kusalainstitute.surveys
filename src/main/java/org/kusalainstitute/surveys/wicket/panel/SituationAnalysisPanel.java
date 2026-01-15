@@ -8,6 +8,7 @@ import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
 import org.apache.wicket.markup.html.panel.GenericPanel;
+import org.apache.wicket.markup.repeater.RepeatingView;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
 import org.kusalainstitute.surveys.wicket.model.SingleValueData;
@@ -170,7 +171,7 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 					@Override
 					protected void populateItem(ListItem<SingleValueData> cellItem)
 					{
-						populateSingleValueCell(cellItem);
+						populateSingleValueCell(cellItem, "active-understanding");
 					}
 				});
 
@@ -180,7 +181,7 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 					@Override
 					protected void populateItem(ListItem<SingleValueData> cellItem)
 					{
-						populateSingleValueCell(cellItem);
+						populateSingleValueCell(cellItem, "active-ease");
 					}
 				});
 
@@ -240,8 +241,10 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 		add(totalSpeakingLabel);
 	}
 
+	private static final int MAX_BRICKS = 5;
+
 	/**
-	 * Populates a situation cell with pre/post bars and delta (for Speaking section).
+	 * Populates a situation cell with pre/post brick rows and delta (for Speaking section).
 	 *
 	 * @param cellItem
 	 *            the list item for the situation cell
@@ -250,18 +253,14 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 	{
 		SituationData data = cellItem.getModelObject();
 
-		// Pre bar
-		WebMarkupContainer preBar = new WebMarkupContainer("preBar");
-		preBar.add(AttributeModifier.replace("style", "width:" + data.preWidthPercent() + "%"));
-		cellItem.add(preBar);
+		// Pre bricks
+		cellItem.add(createBrickRow("preBricks", data.preValue(), "active-pre"));
 
 		// Pre value
 		cellItem.add(new Label("preVal", data.preValue() != null ? String.valueOf(data.preValue()) : "-"));
 
-		// Post bar
-		WebMarkupContainer postBar = new WebMarkupContainer("postBar");
-		postBar.add(AttributeModifier.replace("style", "width:" + data.postWidthPercent() + "%"));
-		cellItem.add(postBar);
+		// Post bricks
+		cellItem.add(createBrickRow("postBricks", data.postValue(), "active-post"));
 
 		// Post value
 		cellItem.add(new Label("postVal", data.postValue() != null ? String.valueOf(data.postValue()) : "-"));
@@ -273,19 +272,45 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 	}
 
 	/**
-	 * Populates a single-value cell with one bar (for Understanding/Ease sections).
+	 * Creates a RepeatingView containing 5 brick divs with active classes based on value.
+	 *
+	 * @param id
+	 *            the wicket component id
+	 * @param value
+	 *            the rating value (1-5), can be null
+	 * @param activeClass
+	 *            the CSS class to add for active bricks
+	 * @return RepeatingView with 5 brick containers
+	 */
+	private RepeatingView createBrickRow(String id, Integer value, String activeClass)
+	{
+		RepeatingView bricks = new RepeatingView(id);
+		for (int i = 0; i < MAX_BRICKS; i++)
+		{
+			WebMarkupContainer brick = new WebMarkupContainer(bricks.newChildId());
+			if (value != null && i < value)
+			{
+				brick.add(AttributeModifier.append("class", activeClass));
+			}
+			bricks.add(brick);
+		}
+		return bricks;
+	}
+
+	/**
+	 * Populates a single-value cell with brick row (for Understanding/Ease sections).
 	 *
 	 * @param cellItem
 	 *            the list item for the single-value cell
+	 * @param activeClass
+	 *            the CSS class to use for active bricks
 	 */
-	private void populateSingleValueCell(ListItem<SingleValueData> cellItem)
+	private void populateSingleValueCell(ListItem<SingleValueData> cellItem, String activeClass)
 	{
 		SingleValueData data = cellItem.getModelObject();
 
-		// Single bar
-		WebMarkupContainer bar = new WebMarkupContainer("bar");
-		bar.add(AttributeModifier.replace("style", "width:" + data.widthPercent() + "%"));
-		cellItem.add(bar);
+		// Bricks
+		cellItem.add(createBrickRow("bricks", data.value(), activeClass));
 
 		// Value
 		cellItem.add(new Label("val", data.getFormattedValue()));
