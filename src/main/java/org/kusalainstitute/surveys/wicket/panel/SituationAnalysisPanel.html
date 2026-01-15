@@ -7,13 +7,16 @@
 .situation-table-wrapper {
 	width: 100%;
 	overflow-x: auto;
+	overflow-y: auto;
+	max-height: 90vh;
 	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 	border: 1px solid #dee2e6;
 	margin-bottom: 20px;
 }
 
 .situation-table {
-	border-collapse: collapse;
+	border-collapse: separate;
+	border-spacing: 0;
 	width: 100%;
 	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
 		Helvetica, Arial, sans-serif;
@@ -38,7 +41,24 @@
 .situation-table th.sticky-col {
 	background-color: #343a40;
 	color: white;
-	z-index: 11;
+	z-index: 21;
+}
+
+/* Sticky thead */
+.situation-table thead {
+	position: sticky;
+	top: 0;
+	z-index: 20;
+}
+
+.situation-table thead tr:first-child th {
+	position: sticky;
+	top: 0;
+}
+
+.situation-table thead tr:nth-child(2) th {
+	position: sticky;
+	top: 37px; /* Height of first header row */
 }
 
 /* Footer sticky col */
@@ -444,9 +464,11 @@
 					class="total-summary-value" wicket:id="totalSpeakingChange"></span>
 			</div>
 		</div>
-		
-		<div wicket:id="improvementSummary"></div>
-		<div wicket:id="ratingDistribution"></div>
+
+		<div class="container mt-5">
+			<div wicket:id="improvementSummary"></div>
+			<div wicket:id="ratingDistribution"></div>
+		</div>
 	</wicket:panel>
 </body>
 </html>

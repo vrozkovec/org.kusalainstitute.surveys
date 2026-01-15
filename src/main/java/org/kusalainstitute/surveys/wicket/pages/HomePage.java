@@ -21,6 +21,8 @@ import org.kusalainstitute.surveys.wicket.model.SituationAnalysisModel.MatchedPa
 import org.kusalainstitute.surveys.wicket.pages.base.BasePage;
 import org.kusalainstitute.surveys.wicket.panel.SituationAnalysisPanel;
 
+import de.agilecoders.wicket.core.util.CssClassNames;
+
 /**
  * Home page for signed-in users
  */
@@ -63,8 +65,7 @@ public class HomePage extends BasePage
 	{
 		Jdbi jdbi = SurveyApplication.get().getJdbi();
 
-		return jdbi.withHandle(handle ->
-		{
+		return jdbi.withHandle(handle -> {
 			MatchDao matchDao = handle.attach(MatchDao.class);
 			PersonDao personDao = handle.attach(PersonDao.class);
 			PreSurveyDao preSurveyDao = handle.attach(PreSurveyDao.class);
@@ -89,5 +90,11 @@ public class HomePage extends BasePage
 
 			return SituationAnalysisModel.buildFromMatchedPairs(pairs);
 		});
+	}
+
+	@Override
+	protected String getContainerCssClass()
+	{
+		return CssClassNames.Grid.containerFluid;
 	}
 }

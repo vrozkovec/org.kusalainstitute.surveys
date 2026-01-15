@@ -100,6 +100,11 @@ public class RatingDistributionPanel extends GenericPanel<SituationAnalysisModel
 				postBar.add(AttributeModifier.replace("style", "width:" + postPercent + "%"));
 				item.add(postBar);
 				item.add(new Label("postCount", String.valueOf(postCount)));
+
+				// Delta (change from pre to post)
+				int delta = postCount - preCount;
+				String deltaText = delta > 0 ? "(+" + delta + ")" : "(" + delta + ")";
+				item.add(new Label("postDelta", deltaText));
 			}
 		});
 
