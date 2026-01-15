@@ -21,11 +21,9 @@ import de.agilecoders.wicket.core.markup.html.bootstrap.components.TooltipBehavi
 import de.agilecoders.wicket.core.markup.html.bootstrap.components.TooltipConfig;
 
 /**
- * Wicket panel displaying a situation-by-situation analysis table.
- * Shows three sections:
- * - Speaking: pre/post comparison with progress bars and delta
- * - Understanding: pre Q9 values only (single bar)
- * - Ease: post Q7 inverted values only (single bar)
+ * Wicket panel displaying a situation-by-situation analysis table. Shows three sections: -
+ * Speaking: pre/post comparison with progress bars and delta - Understanding: pre Q9 values only
+ * (single bar) - Ease: post Q7 inverted values only (single bar)
  */
 public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 {
@@ -48,44 +46,38 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 	{
 		super.onInitialize();
 
+		add(new ImprovementSummaryPanel("improvementSummary", getModel()));
+		add(new RatingDistributionPanel("ratingDistribution", getModel()));
+
 		SituationAnalysisModel data = getModelObject();
 
 		// Tooltip configuration for headers
-		TooltipConfig tooltipConfig = new TooltipConfig()
-			.withPlacement(TooltipConfig.Placement.bottom)
-			.withHtml(true);
+		TooltipConfig tooltipConfig = new TooltipConfig().withPlacement(TooltipConfig.Placement.bottom).withHtml(true);
 
 		// Group header tooltips (colspan row)
 		WebMarkupContainer speakingGroupHeader = new WebMarkupContainer("speakingGroupHeader");
-		speakingGroupHeader.add(new TooltipBehavior(Model.of(
-			"Pre (Q7): " + SituationAnalysisModel.Q7_PRE_TEXT.replace(": ", "")
-				+ "<br/>Post (Q6): " + SituationAnalysisModel.Q6_POST_TEXT.replace(": ", "")),
-			tooltipConfig));
+		speakingGroupHeader
+			.add(new TooltipBehavior(Model.of("Pre (Q7): " + SituationAnalysisModel.Q7_PRE_TEXT.replace(": ", "")
+				+ "<br/>Post (Q6): " + SituationAnalysisModel.Q6_POST_TEXT.replace(": ", "")), tooltipConfig));
 		add(speakingGroupHeader);
 
 		WebMarkupContainer understandingGroupHeader = new WebMarkupContainer("understandingGroupHeader");
-		understandingGroupHeader.add(new TooltipBehavior(Model.of(
-			"Q9: " + SituationAnalysisModel.Q9_PRE_TEXT.replace(": ", "")),
-			tooltipConfig));
+		understandingGroupHeader.add(
+			new TooltipBehavior(Model.of("Q9: " + SituationAnalysisModel.Q9_PRE_TEXT.replace(": ", "")), tooltipConfig));
 		add(understandingGroupHeader);
 
 		WebMarkupContainer easeGroupHeader = new WebMarkupContainer("easeGroupHeader");
-		easeGroupHeader.add(new TooltipBehavior(Model.of(
-			"Q7 (Post): " + SituationAnalysisModel.Q7_POST_TEXT.replace(": ", "")
-				+ "<br/>(Values inverted: higher = easier)"),
-			tooltipConfig));
+		easeGroupHeader
+			.add(new TooltipBehavior(Model.of("Q7 (Post): " + SituationAnalysisModel.Q7_POST_TEXT.replace(": ", "")
+				+ "<br/>(Values inverted: higher = easier)"), tooltipConfig));
 		add(easeGroupHeader);
 
 		WebMarkupContainer textPreGroupHeader = new WebMarkupContainer("textPreGroupHeader");
-		textPreGroupHeader.add(new TooltipBehavior(Model.of(
-			"Free-text responses from the pre-survey"),
-			tooltipConfig));
+		textPreGroupHeader.add(new TooltipBehavior(Model.of("Free-text responses from the pre-survey"), tooltipConfig));
 		add(textPreGroupHeader);
 
 		WebMarkupContainer textPostGroupHeader = new WebMarkupContainer("textPostGroupHeader");
-		textPostGroupHeader.add(new TooltipBehavior(Model.of(
-			"Free-text responses from the post-survey"),
-			tooltipConfig));
+		textPostGroupHeader.add(new TooltipBehavior(Model.of("Free-text responses from the post-survey"), tooltipConfig));
 		add(textPostGroupHeader);
 
 		// Situation name headers - Speaking group
@@ -158,8 +150,8 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 				// Individual total change for speaking
 				Label speakingTotal = new Label("studentSpeakingTotal",
 					SituationAnalysisModel.formatAverage(row.totalSpeakingChange()));
-				speakingTotal
-					.add(AttributeModifier.append("class", SituationAnalysisModel.getAverageCssClass(row.totalSpeakingChange())));
+				speakingTotal.add(AttributeModifier.append("class",
+					SituationAnalysisModel.getAverageCssClass(row.totalSpeakingChange())));
 				item.add(speakingTotal);
 
 				// Speaking situation cells (pre/post comparison)

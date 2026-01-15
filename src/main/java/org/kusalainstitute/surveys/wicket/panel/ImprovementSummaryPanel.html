@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html xmlns:wicket="http://wicket.apache.org">
+<head>
+<wicket:head>
+<style>
+    .improvement-summary {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .improvement-summary h4 {
+        margin-top: 0;
+        margin-bottom: 15px;
+        color: #333;
+    }
+
+    .summary-stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        margin-bottom: 25px;
+        padding: 15px;
+        background-color: #fff;
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
+    }
+
+    .stat-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 100px;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: #6c757d;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+    }
+
+    .stat-value {
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .stat-subvalue {
+        font-size: 14px;
+        color: #6c757d;
+    }
+
+    .stat-item.improved .stat-value { color: #28a745; }
+    .stat-item.same .stat-value { color: #ffc107; }
+    .stat-item.worse .stat-value { color: #dc3545; }
+    .stat-item.average .stat-value { color: #007bff; }
+
+    .category-table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #fff;
+        border-radius: 6px;
+        overflow: hidden;
+        border: 1px solid #e9ecef;
+    }
+
+    .category-table th {
+        background-color: #343a40;
+        color: white;
+        padding: 10px 15px;
+        text-align: left;
+        font-weight: 600;
+    }
+
+    .category-table td {
+        padding: 10px 15px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .category-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .category-table .category-name {
+        font-weight: 600;
+    }
+
+    .category-table .category-desc {
+        font-size: 12px;
+        color: #6c757d;
+    }
+
+    .category-table .count-cell {
+        text-align: center;
+        font-weight: bold;
+    }
+
+    .category-table .percent-cell {
+        text-align: center;
+    }
+
+    .category-table .bar-cell {
+        width: 200px;
+    }
+
+    .bar-track {
+        background-color: #e9ecef;
+        border-radius: 4px;
+        height: 20px;
+        overflow: hidden;
+    }
+
+    .bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+</style>
+</wicket:head>
+</head>
+<body>
+<wicket:panel>
+
+<div class="improvement-summary">
+    <h4>Improvement Summary</h4>
+
+    <div class="summary-stats">
+        <div class="stat-item">
+            <span class="stat-label">Total Students</span>
+            <span class="stat-value" wicket:id="totalStudents"></span>
+        </div>
+        <div class="stat-item improved">
+            <span class="stat-label">Improved</span>
+            <span class="stat-value" wicket:id="improvedCount"></span>
+            <span class="stat-subvalue">(<span wicket:id="improvedPercent"></span>)</span>
+        </div>
+        <div class="stat-item same">
+            <span class="stat-label">Same</span>
+            <span class="stat-value" wicket:id="sameCount"></span>
+            <span class="stat-subvalue">(<span wicket:id="samePercent"></span>)</span>
+        </div>
+        <div class="stat-item worse">
+            <span class="stat-label">Worse</span>
+            <span class="stat-value" wicket:id="worseCount"></span>
+            <span class="stat-subvalue">(<span wicket:id="worsePercent"></span>)</span>
+        </div>
+        <div class="stat-item average">
+            <span class="stat-label">Avg Change</span>
+            <span class="stat-value" wicket:id="averageImprovement"></span>
+        </div>
+    </div>
+
+    <table class="category-table">
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th style="text-align: center;">Count</th>
+                <th style="text-align: center;">%</th>
+                <th>Distribution</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr wicket:id="categoryRows">
+                <td>
+                    <span class="category-name" wicket:id="categoryName"></span><br/>
+                    <span class="category-desc" wicket:id="categoryDescription"></span>
+                </td>
+                <td class="count-cell" wicket:id="categoryCount"></td>
+                <td class="percent-cell" wicket:id="categoryPercent"></td>
+                <td class="bar-cell">
+                    <div class="bar-track">
+                        <div class="bar-fill" wicket:id="categoryBar"></div>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+</wicket:panel>
+</body>
+</html>

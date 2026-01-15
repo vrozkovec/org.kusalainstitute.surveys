@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html xmlns:wicket="http://wicket.apache.org">
+<head>
+<wicket:head>
+<style>
+    .rating-distribution {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .rating-distribution h4 {
+        margin-top: 0;
+        margin-bottom: 15px;
+        color: #333;
+    }
+
+    .situation-selector {
+        margin-bottom: 20px;
+    }
+
+    .situation-selector label {
+        font-weight: 600;
+        margin-right: 10px;
+    }
+
+    .situation-selector select {
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 14px;
+        min-width: 200px;
+    }
+
+    .distribution-chart {
+        background-color: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 15px;
+    }
+
+    .distribution-header {
+        display: flex;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .distribution-header .header-label {
+        flex: 1;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .distribution-header .header-pre {
+        width: 45%;
+        text-align: center;
+        color: #6c757d;
+        font-weight: 600;
+    }
+
+    .distribution-header .header-post {
+        width: 45%;
+        text-align: center;
+        color: #28a745;
+        font-weight: 600;
+    }
+
+    .rating-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+        padding: 8px 0;
+    }
+
+    .rating-row:last-child {
+        margin-bottom: 0;
+    }
+
+    .rating-info {
+        width: 120px;
+        flex-shrink: 0;
+    }
+
+    .rating-number {
+        font-size: 20px;
+        font-weight: bold;
+        color: #333;
+        margin-right: 8px;
+    }
+
+    .rating-label {
+        font-size: 12px;
+        color: #6c757d;
+    }
+
+    .bar-container {
+        flex: 1;
+        display: flex;
+        gap: 20px;
+    }
+
+    .bar-section {
+        flex: 1;
+        display: flex;
+        align-items: center;
+    }
+
+    .bar-section.pre {
+        flex-direction: row-reverse;
+    }
+
+    .bar-track {
+        flex: 1;
+        height: 24px;
+        background-color: #e9ecef;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .bar-section.pre .bar-track {
+        direction: rtl;
+    }
+
+    .bar-fill-pre {
+        height: 100%;
+        background-color: #adb5bd;
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+
+    .bar-fill-post {
+        height: 100%;
+        background-color: #28a745;
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+
+    .bar-count {
+        width: 40px;
+        text-align: center;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .bar-section.pre .bar-count {
+        text-align: right;
+        padding-right: 8px;
+    }
+
+    .bar-section.post .bar-count {
+        text-align: left;
+        padding-left: 8px;
+    }
+
+    .situation-name {
+        text-align: center;
+        font-size: 14px;
+        color: #6c757d;
+        margin-top: 15px;
+        padding-top: 10px;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .legend {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin-top: 15px;
+        padding-top: 10px;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .legend-box {
+        width: 16px;
+        height: 16px;
+        border-radius: 3px;
+    }
+
+    .legend-box.pre {
+        background-color: #adb5bd;
+    }
+
+    .legend-box.post {
+        background-color: #28a745;
+    }
+
+    .legend-text {
+        font-size: 13px;
+        color: #6c757d;
+    }
+</style>
+</wicket:head>
+</head>
+<body>
+<wicket:panel>
+
+<div class="rating-distribution">
+    <h4>Rating Distribution: Before &amp; After</h4>
+
+    <div class="situation-selector">
+        <label for="situationSelect">Situation:</label>
+        <select wicket:id="situationSelect"></select>
+    </div>
+
+    <div wicket:id="distributionContainer">
+        <div class="distribution-chart">
+            <div class="distribution-header">
+                <div class="header-label">Rating</div>
+                <div class="header-pre">Before (PRE)</div>
+                <div class="header-post">After (POST)</div>
+            </div>
+
+            <div wicket:id="ratingRows" class="rating-row">
+                <div class="rating-info">
+                    <span class="rating-number" wicket:id="ratingNumber"></span>
+                    <span class="rating-label" wicket:id="ratingLabel"></span>
+                </div>
+                <div class="bar-container">
+                    <div class="bar-section pre">
+                        <span class="bar-count" wicket:id="preCount"></span>
+                        <div class="bar-track">
+                            <div class="bar-fill-pre" wicket:id="preBar"></div>
+                        </div>
+                    </div>
+                    <div class="bar-section post">
+                        <div class="bar-track">
+                            <div class="bar-fill-post" wicket:id="postBar"></div>
+                        </div>
+                        <span class="bar-count" wicket:id="postCount"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="situation-name">
+                Showing: <strong wicket:id="situationLabel"></strong>
+            </div>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-box pre"></div>
+                    <span class="legend-text">Before (PRE Survey)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box post"></div>
+                    <span class="legend-text">After (POST Survey)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</wicket:panel>
+</body>
+</html>

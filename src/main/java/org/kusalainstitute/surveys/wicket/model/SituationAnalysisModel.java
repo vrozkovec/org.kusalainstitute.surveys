@@ -18,6 +18,178 @@ public class SituationAnalysisModel implements Serializable
 {
 
 	/**
+	 * Improvement categories based on total speaking change.
+	 */
+	public enum ImprovementCategory
+	{
+		MUCH_BETTER("Much Better", "+2.0 or more", "success"),
+		BETTER("Better", "+0.5 to +2.0", "info"),
+		SLIGHT("Slight", "+0.1 to +0.5", "secondary"),
+		SAME("Same", "-0.1 to +0.1", "warning"),
+		WORSE("Worse", "below -0.1", "danger");
+
+		private final String label;
+		private final String description;
+		private final String cssClass;
+
+		ImprovementCategory(String label, String description, String cssClass)
+		{
+			this.label = label;
+			this.description = description;
+			this.cssClass = cssClass;
+		}
+
+		public String getLabel()
+		{
+			return label;
+		}
+
+		public String getDescription()
+		{
+			return description;
+		}
+
+		public String getCssClass()
+		{
+			return cssClass;
+		}
+
+		/**
+		 * Determines the improvement category based on the total speaking change.
+		 *
+		 * @param change
+		 *            the total speaking change value
+		 * @return the appropriate category
+		 */
+		public static ImprovementCategory fromChange(BigDecimal change)
+		{
+			if (change == null)
+			{
+				return SAME;
+			}
+			double val = change.doubleValue();
+			if (val >= 2.0)
+			{
+				return MUCH_BETTER;
+			}
+			if (val >= 0.5)
+			{
+				return BETTER;
+			}
+			if (val >= 0.1)
+			{
+				return SLIGHT;
+			}
+			if (val >= -0.1)
+			{
+				return SAME;
+			}
+			return WORSE;
+		}
+	}
+
+	/**
+	 * Summary of improvement statistics.
+	 *
+	 * @param totalStudents
+	 *            total number of matched students
+	 * @param improvedCount
+	 *            number of students who improved (change > 0.1)
+	 * @param sameCount
+	 *            number of students who stayed the same (-0.1 to 0.1)
+	 * @param worseCount
+	 *            number of students who got worse (change < -0.1)
+	 * @param averageImprovement
+	 *            average improvement across all students
+	 */
+	public record ImprovementSummary(int totalStudents, int improvedCount, int sameCount, int worseCount,
+		BigDecimal averageImprovement) implements Serializable
+	{
+		/**
+		 * Returns the percentage of students who improved.
+		 *
+		 * @return percentage as integer (0-100)
+		 */
+		public int improvedPercent()
+		{
+			return totalStudents > 0 ? improvedCount * 100 / totalStudents : 0;
+		}
+
+		/**
+		 * Returns the percentage of students who stayed the same.
+		 *
+		 * @return percentage as integer (0-100)
+		 */
+		public int samePercent()
+		{
+			return totalStudents > 0 ? sameCount * 100 / totalStudents : 0;
+		}
+
+		/**
+		 * Returns the percentage of students who got worse.
+		 *
+		 * @return percentage as integer (0-100)
+		 */
+		public int worsePercent()
+		{
+			return totalStudents > 0 ? worseCount * 100 / totalStudents : 0;
+		}
+	}
+
+	/**
+	 * Count of students in an improvement category.
+	 *
+	 * @param category
+	 *            the improvement category
+	 * @param count
+	 *            number of students in this category
+	 * @param percent
+	 *            percentage of total students
+	 */
+	public record CategoryCount(ImprovementCategory category, int count, int percent) implements Serializable
+	{
+	}
+
+	/**
+	 * Rating distribution showing before/after counts for each rating level.
+	 *
+	 * @param situationName
+	 *            name of the situation (or "All" for aggregate)
+	 * @param preCounts
+	 *            counts for each rating 1-5 (index 0-4)
+	 * @param postCounts
+	 *            counts for each rating 1-5 (index 0-4)
+	 */
+	public record RatingDistribution(String situationName, List<Integer> preCounts, List<Integer> postCounts)
+		implements Serializable
+	{
+		/**
+		 * Returns the maximum count across all ratings for scaling bars.
+		 *
+		 * @return maximum count
+		 */
+		public int getMaxCount()
+		{
+			int max = 0;
+			for (Integer count : preCounts)
+			{
+				if (count != null && count > max)
+				{
+					max = count;
+				}
+			}
+			for (Integer count : postCounts)
+			{
+				if (count != null && count > max)
+				{
+					max = count;
+				}
+			}
+			return max;
+		}
+	}
+
+	/**
 	 * Names of all 11 situations in display order.
 	 */
 	public static final List<String> SITUATION_NAMES = List.of("Directions", "Healthcare", "Authorities", "Job Interview",
@@ -703,5 +875,142 @@ public class SituationAnalysisModel implements Serializable
 	public record MatchedPairData(String name, Long personId, String cohort, PreSurveyResponse pre,
 		PostSurveyResponse post) implements Serializable
 	{
+	}
+
+	/**
+	 * Calculates the improvement summary statistics based on total speaking change per student.
+	 *
+	 * @return ImprovementSummary with counts and percentages
+	 */
+	public ImprovementSummary getImprovementSummary()
+	{
+		int total = rows.size();
+		int improved = 0;
+		int same = 0;
+		int worse = 0;
+
+		for (StudentRow row : rows)
+		{
+			BigDecimal change = row.totalSpeakingChange();
+			if (change == null)
+			{
+				same++;
+			}
+			else if (change.doubleValue() > 0.1)
+			{
+				improved++;
+			}
+			else if (change.doubleValue() < -0.1)
+			{
+				worse++;
+			}
+			else
+			{
+				same++;
+			}
+		}
+
+		return new ImprovementSummary(total, improved, same, worse, totalSpeakingChange);
+	}
+
+	/**
+	 * Calculates the count of students in each improvement category.
+	 *
+	 * @return list of CategoryCount objects for each category
+	 */
+	public List<CategoryCount> getImprovementCategories()
+	{
+		int total = rows.size();
+		int[] counts = new int[ImprovementCategory.values().length];
+
+		for (StudentRow row : rows)
+		{
+			ImprovementCategory category = ImprovementCategory.fromChange(row.totalSpeakingChange());
+			counts[category.ordinal()]++;
+		}
+
+		List<CategoryCount> result = new ArrayList<>();
+		for (ImprovementCategory category : ImprovementCategory.values())
+		{
+			int count = counts[category.ordinal()];
+			int percent = total > 0 ? count * 100 / total : 0;
+			result.add(new CategoryCount(category, count, percent));
+		}
+
+		return result;
+	}
+
+	/**
+	 * Calculates the rating distribution for a specific speaking situation.
+	 *
+	 * @param situationIndex
+	 *            index of the situation (0-10)
+	 * @return RatingDistribution with pre and post counts per rating
+	 */
+	public RatingDistribution getRatingDistribution(int situationIndex)
+	{
+		int[] preCounts = new int[5];
+		int[] postCounts = new int[5];
+
+		for (StudentRow row : rows)
+		{
+			SituationData data = row.speakingData().get(situationIndex);
+			if (data.preValue() != null && data.preValue() >= 1 && data.preValue() <= 5)
+			{
+				preCounts[data.preValue() - 1]++;
+			}
+			if (data.postValue() != null && data.postValue() >= 1 && data.postValue() <= 5)
+			{
+				postCounts[data.postValue() - 1]++;
+			}
+		}
+
+		String name = situationIndex < SITUATION_NAMES.size() ? SITUATION_NAMES.get(situationIndex) : "Unknown";
+		return new RatingDistribution(name, toIntegerList(preCounts), toIntegerList(postCounts));
+	}
+
+	/**
+	 * Calculates the aggregate rating distribution across all speaking situations.
+	 *
+	 * @return RatingDistribution with pre and post counts per rating for all situations combined
+	 */
+	public RatingDistribution getRatingDistributionAll()
+	{
+		int[] preCounts = new int[5];
+		int[] postCounts = new int[5];
+
+		for (StudentRow row : rows)
+		{
+			for (SituationData data : row.speakingData())
+			{
+				if (data.preValue() != null && data.preValue() >= 1 && data.preValue() <= 5)
+				{
+					preCounts[data.preValue() - 1]++;
+				}
+				if (data.postValue() != null && data.postValue() >= 1 && data.postValue() <= 5)
+				{
+					postCounts[data.postValue() - 1]++;
+				}
+			}
+		}
+
+		return new RatingDistribution("All Situations", toIntegerList(preCounts), toIntegerList(postCounts));
+	}
+
+	/**
+	 * Converts an int array to a List of Integer.
+	 *
+	 * @param arr
+	 *            the int array
+	 * @return list of Integer
+	 */
+	private static List<Integer> toIntegerList(int[] arr)
+	{
+		List<Integer> result = new ArrayList<>();
+		for (int val : arr)
+		{
+			result.add(val);
+		}
+		return result;
 	}
 }
