@@ -998,6 +998,23 @@ public class SituationAnalysisModel implements Serializable
 	}
 
 	/**
+	 * Returns all rating distributions: aggregate "All Situations" plus each of the 11 individual
+	 * situations. Used by RatingDistributionAllPanel to display all distributions at once.
+	 *
+	 * @return list of 12 RatingDistribution objects (1 aggregate + 11 individual)
+	 */
+	public List<RatingDistribution> getAllRatingDistributions()
+	{
+		List<RatingDistribution> result = new ArrayList<>();
+		result.add(getRatingDistributionAll());
+		for (int i = 0; i < SITUATION_NAMES.size(); i++)
+		{
+			result.add(getRatingDistribution(i));
+		}
+		return result;
+	}
+
+	/**
 	 * Converts an int array to a List of Integer.
 	 *
 	 * @param arr

@@ -4,6 +4,8 @@ import org.apache.wicket.Application;
 import org.apache.wicket.markup.head.filter.JavaScriptFilteredIntoFooterHeaderResponse;
 import org.apache.wicket.markup.html.WebPage;
 import org.apache.wicket.protocol.http.WebApplication;
+import org.apache.wicket.request.Url;
+import org.apache.wicket.request.resource.UrlResourceReference;
 import org.apache.wicket.settings.ExceptionSettings;
 import org.apache.wicket.util.lang.Bytes;
 import org.jdbi.v3.core.Jdbi;
@@ -60,7 +62,10 @@ public class SurveyApplication extends WebApplication
 		 ****************************************************/
 		BootstrapSettings settings = new BootstrapSettings();
 		settings.setJsResourceFilterName("footer-container");
-
+		settings.setCssResourceReference(
+			new UrlResourceReference(Url.parse("https://cdn.jsdelivr.net/npm/bootstrap@5/dist/css/bootstrap.min.css")));
+		settings.setJsResourceReference(new UrlResourceReference(
+			Url.parse("https://cdn.jsdelivr.net/npm/bootstrap@5/dist/js/bootstrap.bundle.min.js")));
 		Bootstrap.install(this, settings);
 		getHeaderResponseDecorators()
 			.add(response -> new JavaScriptFilteredIntoFooterHeaderResponse(response, "footer-container"));

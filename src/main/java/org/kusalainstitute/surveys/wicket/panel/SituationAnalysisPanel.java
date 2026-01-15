@@ -48,7 +48,7 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 		super.onInitialize();
 
 		add(new ImprovementSummaryPanel("improvementSummary", getModel()));
-		add(new RatingDistributionPanel("ratingDistribution", getModel()));
+		add(new RatingDistributionAllPanel("ratingDistribution", getModel()));
 
 		SituationAnalysisModel data = getModelObject();
 
