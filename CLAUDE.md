@@ -37,9 +37,9 @@ src/main/java/org/kusalainstitute/surveys/
 | Q4 | Children ages | Multi-select Enum |
 | Q5 | Most difficult thing using English | Free text |
 | Q6 | Why improve English | Free text |
-| Q7 | Speaking confidence (11 situations) | Scale 1-4 |
+| Q7 | Speaking confidence (11 situations) | Scale 1-5 |
 | Q8 | Other situations | Free text |
-| Q9 | Understanding confidence (11 situations) | Scale 1-4 |
+| Q9 | Understanding confidence (11 situations) | Scale 1-5 |
 | Q10 | Most difficult part | Free text |
 | Q11 | Describe difficult situations | Free text |
 
@@ -51,7 +51,7 @@ src/main/java/org/kusalainstitute/surveys/
 | Q3 | App frequency | Enum |
 | Q4 | Progress assessment | Enum |
 | Q5 | What helped most | Free text |
-| Q6 | Speaking ability (11 situations) | Scale 1-4 |
+| Q6 | Speaking ability (11 situations) | Scale 1-5 |
 | Q7 | Difficulty expressing (11 situations) | Scale 1-5 |
 | Q8 | Most difficult overall | Free text |
 | Q9 | Most difficult for job | Free text |
