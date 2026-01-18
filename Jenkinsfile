@@ -14,6 +14,10 @@ pipeline {
             }
         }
 /*        
+		Careful!
+		
+		When enabling test that runs the app, make sure import does not query Deepl all over again.
+		
         stage('Test') {
             steps {
                 stageTest()
