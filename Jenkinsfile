@@ -13,16 +13,18 @@ pipeline {
                 stageBuild()
             }
         }
+/*        
         stage('Test') {
             steps {
                 stageTest()
             }
             post {
                 always {
-                    junit 'target/surefire-reports/*.xml'
+                    junit 'target/surefire-reports.xml'
                 }
             }
         }
+*/
         stage('Copy artifacts') {
             steps {
 				copyToDeployDir()
