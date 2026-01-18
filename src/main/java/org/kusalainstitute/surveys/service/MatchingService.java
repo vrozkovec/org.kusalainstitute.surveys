@@ -1,11 +1,13 @@
 package org.kusalainstitute.surveys.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
@@ -13,10 +15,16 @@ import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.jdbi.v3.core.Jdbi;
 import org.kusalainstitute.surveys.dao.MatchDao;
 import org.kusalainstitute.surveys.dao.PersonDao;
+import org.kusalainstitute.surveys.dao.PostSurveyDao;
+import org.kusalainstitute.surveys.dao.PreSurveyDao;
 import org.kusalainstitute.surveys.pojo.Person;
 import org.kusalainstitute.surveys.pojo.PersonMatch;
+import org.kusalainstitute.surveys.pojo.PostSurveyResponse;
+import org.kusalainstitute.surveys.pojo.PreSurveyResponse;
 import org.kusalainstitute.surveys.pojo.enums.MatchType;
 import org.kusalainstitute.surveys.pojo.enums.SurveyType;
+import org.kusalainstitute.surveys.wicket.model.MatchRowData;
+import org.kusalainstitute.surveys.wicket.model.UnmatchedPersonData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,17 +45,21 @@ public class MatchingService
 
 	private final Jdbi jdbi;
 	private final LevenshteinDistance levenshtein;
+	private final ManualMatchPersistenceService manualMatchPersistence;
 
 	/**
-	 * Creates a new MatchingService with injected JDBI instance.
+	 * Creates a new MatchingService with injected dependencies.
 	 *
 	 * @param jdbi
 	 *            the JDBI instance for database access
+	 * @param manualMatchPersistence
+	 *            service for persisting manual matches
 	 */
 	@Inject
-	public MatchingService(Jdbi jdbi)
+	public MatchingService(Jdbi jdbi, ManualMatchPersistenceService manualMatchPersistence)
 	{
 		this.jdbi = jdbi;
+		this.manualMatchPersistence = manualMatchPersistence;
 		this.levenshtein = new LevenshteinDistance();
 	}
 
@@ -122,9 +134,9 @@ public class MatchingService
 
 				// Filter out already matched POST people
 				List<Person> unmatchedPre = new ArrayList<>(preInCohort);
-				List<Person> unmatchedPost = targetPostPeople.stream()
+				List<Person> unmatchedPost = new ArrayList<>(targetPostPeople.stream()
 					.filter(p -> !matchedPostIds.contains(p.getId()))
-					.collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+					.toList());
 
 				// First pass: exact email matching (skip people with shared emails)
 				for (Person pre : new ArrayList<>(unmatchedPre))
@@ -388,10 +400,273 @@ public class MatchingService
 	}
 
 	/**
+	 * Creates a manual match between two persons and persists it to file for recovery after
+	 * database rebuilds.
+	 *
+	 * @param prePersonId
+	 *            ID of the pre-survey person
+	 * @param postPersonId
+	 *            ID of the post-survey person
+	 * @param matchedBy
+	 *            username of person creating the match
+	 * @param notes
+	 *            optional notes about the match
+	 * @return the created match
+	 */
+	public PersonMatch createAndPersistManualMatch(Long prePersonId, Long postPersonId, String matchedBy, String notes)
+	{
+		return jdbi.withHandle(handle -> {
+			PersonDao personDao = handle.attach(PersonDao.class);
+			MatchDao matchDao = handle.attach(MatchDao.class);
+			PreSurveyDao preSurveyDao = handle.attach(PreSurveyDao.class);
+			PostSurveyDao postSurveyDao = handle.attach(PostSurveyDao.class);
+
+			Person pre = personDao.findById(prePersonId)
+				.orElseThrow(() -> new IllegalArgumentException("Pre-survey person not found: " + prePersonId));
+			Person post = personDao.findById(postPersonId)
+				.orElseThrow(() -> new IllegalArgumentException("Post-survey person not found: " + postPersonId));
+
+			if (pre.getSurveyType() != SurveyType.PRE)
+			{
+				throw new IllegalArgumentException("Person " + prePersonId + " is not a pre-survey respondent");
+			}
+			if (post.getSurveyType() != SurveyType.POST)
+			{
+				throw new IllegalArgumentException("Person " + postPersonId + " is not a post-survey respondent");
+			}
+
+			// Get timestamps from survey responses
+			LocalDateTime preTimestamp = preSurveyDao.findByPersonId(prePersonId)
+				.map(PreSurveyResponse::getTimestamp)
+				.orElse(null);
+			LocalDateTime postTimestamp = postSurveyDao.findByPersonId(postPersonId)
+				.map(PostSurveyResponse::getTimestamp)
+				.orElse(null);
+
+			// Create database match
+			PersonMatch match = new PersonMatch(pre.getCohort(), prePersonId, postPersonId, MatchType.MANUAL, null);
+			match.setMatchedBy(matchedBy);
+			match.setNotes(notes);
+
+			long matchId = matchDao.insert(match);
+			match.setId(matchId);
+
+			// Persist to file for recovery
+			manualMatchPersistence.saveManualMatch(pre, preTimestamp, post, postTimestamp, notes, matchedBy);
+
+			return match;
+		});
+	}
+
+	/**
+	 * Applies stored manual matches from the persistence file after a database rebuild.
+	 *
+	 * @return number of matches successfully restored
+	 */
+	public int applyStoredManualMatches()
+	{
+		List<ManualMatchEntry> entries = manualMatchPersistence.getAllEntries();
+		LOG.info("Attempting to restore {} stored manual matches", entries.size());
+
+		int restoredCount = 0;
+
+		for (ManualMatchEntry entry : entries)
+		{
+			try
+			{
+				boolean restored = jdbi.withHandle(handle -> {
+					PersonDao personDao = handle.attach(PersonDao.class);
+					MatchDao matchDao = handle.attach(MatchDao.class);
+
+					// Find PRE person by composite key
+					Optional<Person> preOpt = personDao.findByCompositeKey(
+						entry.preEmail(),
+						entry.preName(),
+						SurveyType.PRE,
+						entry.preTimestamp());
+
+					// Find POST person by composite key
+					Optional<Person> postOpt = personDao.findByCompositeKey(
+						entry.postEmail(),
+						entry.postName(),
+						SurveyType.POST,
+						entry.postTimestamp());
+
+					if (preOpt.isPresent() && postOpt.isPresent())
+					{
+						Person pre = preOpt.get();
+						Person post = postOpt.get();
+
+						// Check if match already exists
+						if (matchDao.exists(pre.getId(), post.getId()))
+						{
+							LOG.debug("Match already exists for {} -> {}", pre.getName(), post.getName());
+							return true;
+						}
+
+						PersonMatch match = new PersonMatch(pre.getCohort(), pre.getId(), post.getId(), MatchType.MANUAL, null);
+						match.setMatchedBy(entry.createdBy());
+						match.setNotes(entry.notes());
+						matchDao.insert(match);
+
+						LOG.info("Restored manual match: {} -> {}", pre.getName(), post.getName());
+						return true;
+					}
+					else
+					{
+						LOG.warn("Could not find persons for stored match: {} -> {}",
+							entry.preName(), entry.postName());
+						return false;
+					}
+				});
+
+				if (restored)
+				{
+					restoredCount++;
+				}
+			}
+			catch (Exception e)
+			{
+				LOG.error("Failed to restore match: {} -> {}", entry.preName(), entry.postName(), e);
+			}
+		}
+
+		LOG.info("Restored {} of {} stored manual matches", restoredCount, entries.size());
+		return restoredCount;
+	}
+
+	/**
+	 * Gets all matches with full person and survey data for display.
+	 *
+	 * @return list of match row data
+	 */
+	public List<MatchRowData> getAllMatchesWithData()
+	{
+		return jdbi.withHandle(handle -> {
+			MatchDao matchDao = handle.attach(MatchDao.class);
+			PersonDao personDao = handle.attach(PersonDao.class);
+			PreSurveyDao preSurveyDao = handle.attach(PreSurveyDao.class);
+			PostSurveyDao postSurveyDao = handle.attach(PostSurveyDao.class);
+
+			List<PersonMatch> matches = matchDao.findAll();
+			List<MatchRowData> result = new ArrayList<>();
+
+			for (PersonMatch match : matches)
+			{
+				Optional<Person> preOpt = personDao.findById(match.getPrePersonId());
+				Optional<Person> postOpt = personDao.findById(match.getPostPersonId());
+
+				if (preOpt.isPresent() && postOpt.isPresent())
+				{
+					Person pre = preOpt.get();
+					Person post = postOpt.get();
+
+					LocalDateTime preTimestamp = preSurveyDao.findByPersonId(pre.getId())
+						.map(PreSurveyResponse::getTimestamp)
+						.orElse(null);
+					LocalDateTime postTimestamp = postSurveyDao.findByPersonId(post.getId())
+						.map(PostSurveyResponse::getTimestamp)
+						.orElse(null);
+
+					result.add(new MatchRowData(
+						match.getId(),
+						match.getCohort(),
+						match.getMatchType(),
+						match.getMatchedBy(),
+						match.getNotes(),
+						pre.getId(),
+						pre.getName(),
+						pre.getEmail(),
+						preTimestamp,
+						post.getId(),
+						post.getName(),
+						post.getEmail(),
+						postTimestamp));
+				}
+			}
+
+			return result;
+		});
+	}
+
+	/**
+	 * Gets all unmatched PRE survey persons with their survey data.
+	 *
+	 * @return list of unmatched person data
+	 */
+	public List<UnmatchedPersonData> getUnmatchedPreWithData()
+	{
+		return jdbi.withHandle(handle -> {
+			PersonDao personDao = handle.attach(PersonDao.class);
+			PreSurveyDao preSurveyDao = handle.attach(PreSurveyDao.class);
+
+			List<Person> persons = personDao.findUnmatchedPre();
+			List<UnmatchedPersonData> result = new ArrayList<>();
+
+			for (Person person : persons)
+			{
+				LocalDateTime timestamp = preSurveyDao.findByPersonId(person.getId())
+					.map(PreSurveyResponse::getTimestamp)
+					.orElse(null);
+
+				result.add(new UnmatchedPersonData(
+					person.getId(),
+					person.getCohort(),
+					person.getName(),
+					person.getEmail(),
+					person.getSurveyType(),
+					person.isRequiresManualMatch(),
+					timestamp));
+			}
+
+			return result;
+		});
+	}
+
+	/**
+	 * Gets all unmatched POST survey persons with their survey data.
+	 *
+	 * @return list of unmatched person data
+	 */
+	public List<UnmatchedPersonData> getUnmatchedPostWithData()
+	{
+		return jdbi.withHandle(handle -> {
+			PersonDao personDao = handle.attach(PersonDao.class);
+			PostSurveyDao postSurveyDao = handle.attach(PostSurveyDao.class);
+
+			List<Person> persons = personDao.findUnmatchedPost();
+			List<UnmatchedPersonData> result = new ArrayList<>();
+
+			for (Person person : persons)
+			{
+				LocalDateTime timestamp = postSurveyDao.findByPersonId(person.getId())
+					.map(PostSurveyResponse::getTimestamp)
+					.orElse(null);
+
+				result.add(new UnmatchedPersonData(
+					person.getId(),
+					person.getCohort(),
+					person.getName(),
+					person.getEmail(),
+					person.getSurveyType(),
+					person.isRequiresManualMatch(),
+					timestamp));
+			}
+
+			return result;
+		});
+	}
+
+	/**
 	 * Result of automatic matching.
 	 */
 	public record MatchResult(int emailMatches, int nameMatches)
 	{
+		/**
+		 * Gets the total number of matches created.
+		 *
+		 * @return total matches
+		 */
 		public int totalMatches()
 		{
 			return emailMatches + nameMatches;

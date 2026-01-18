@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:panel>
+	<div class="container py-5">
+		<h1 class="mb-4">Kusala Institute Survey Analysis</h1>
+		<p class="lead mb-5">Select a page to view survey data and analysis.</p>
+
+		<div class="row g-4">
+			<!-- Situation Analysis -->
+			<div class="col-md-4">
+				<div class="card h-100">
+					<div class="card-body">
+						<h5 class="card-title">Situation Analysis</h5>
+						<p class="card-text">View the comprehensive situation analysis grid comparing pre-survey and post-survey responses across all 11 situations.</p>
+						<a wicket:id="situationAnalysisLink" class="btn btn-primary">View Analysis</a>
+					</div>
+				</div>
+			</div>
+
+			<!-- Open-Ended Answers -->
+			<div class="col-md-4">
+				<div class="card h-100">
+					<div class="card-body">
+						<h5 class="card-title">Open-Ended Answers</h5>
+						<p class="card-text">Browse all open-ended question responses grouped by question, with translations from French to English.</p>
+						<a wicket:id="answersLink" class="btn btn-primary">View Answers</a>
+					</div>
+				</div>
+			</div>
+
+			<!-- Match Management -->
+			<div class="col-md-4">
+				<div class="card h-100">
+					<div class="card-body">
+						<h5 class="card-title">Match Management</h5>
+						<p class="card-text">View current survey matches, manage unmatched records, and create manual matches between pre and post surveys.</p>
+						<a wicket:id="matchManagementLink" class="btn btn-primary">Manage Matches</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</wicket:panel>
+</body>
+</html>

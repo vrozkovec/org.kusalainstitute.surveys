@@ -3,11 +3,13 @@ package org.kusalainstitute.surveys;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.Callable;
 
 import org.flywaydb.core.Flyway;
 import org.kusalainstitute.surveys.config.GuiceFactory;
+import org.kusalainstitute.surveys.config.SurveysDatabaseConfig;
 import org.kusalainstitute.surveys.config.SurveysModule;
 import org.kusalainstitute.surveys.dao.MatchDao;
 import org.kusalainstitute.surveys.pojo.Person;
@@ -265,6 +267,9 @@ public class App implements Callable<Integer>
 		@Option(names = { "--auto" }, description = "Run automatic matching")
 		private boolean auto;
 
+		@Option(names = { "--restore" }, description = "Restore manual matches from persistence file")
+		private boolean restore;
+
 		@Option(names = { "--status" }, description = "Show matching status")
 		private boolean status;
 
@@ -305,6 +310,14 @@ public class App implements Callable<Integer>
 				System.out.println("Email matches: " + result.emailMatches());
 				System.out.println("Name matches: " + result.nameMatches());
 				System.out.println("Total new matches: " + result.totalMatches());
+				return 0;
+			}
+
+			if (restore)
+			{
+				System.out.println("Restoring manual matches from persistence file...");
+				int restoredCount = matchingService.applyStoredManualMatches();
+				System.out.println("Restored " + restoredCount + " manual match(es).");
 				return 0;
 			}
 
@@ -434,11 +447,12 @@ public class App implements Callable<Integer>
 		private final Flyway flyway;
 		private final ImportService importService;
 		private final MatchingService matchingService;
+		private final SurveysDatabaseConfig config;
 
-		@Option(names = { "--pre" }, description = "Path to pre-survey directory", defaultValue = "data/pre")
+		@Option(names = { "--pre" }, description = "Path to pre-survey directory (default: <data.dir>/pre)")
 		private Path prePath;
 
-		@Option(names = { "--post" }, description = "Path to post-survey directory", defaultValue = "data/post")
+		@Option(names = { "--post" }, description = "Path to post-survey directory (default: <data.dir>/post)")
 		private Path postPath;
 
 		/**
@@ -450,13 +464,17 @@ public class App implements Callable<Integer>
 		 *            the import service
 		 * @param matchingService
 		 *            the matching service
+		 * @param config
+		 *            the application configuration
 		 */
 		@Inject
-		public ReloadCommand(Flyway flyway, ImportService importService, MatchingService matchingService)
+		public ReloadCommand(Flyway flyway, ImportService importService, MatchingService matchingService,
+			SurveysDatabaseConfig config)
 		{
 			this.flyway = flyway;
 			this.importService = importService;
 			this.matchingService = matchingService;
+			this.config = config;
 		}
 
 		@Override
@@ -464,6 +482,11 @@ public class App implements Callable<Integer>
 		{
 			try
 			{
+				// Use configured data directory for defaults
+				String dataDir = config.getDataDir();
+				Path effectivePrePath = prePath != null ? prePath : Paths.get(dataDir, "pre");
+				Path effectivePostPath = postPath != null ? postPath : Paths.get(dataDir, "post");
+
 				// Step 1: Initialize database
 				System.out.println("=== Step 1: Initializing database ===");
 				flyway.migrate();
@@ -472,8 +495,8 @@ public class App implements Callable<Integer>
 
 				// Step 2: Import surveys
 				System.out.println("=== Step 2: Importing surveys ===");
-				int preCount = importDirectory(prePath, true);
-				int postCount = importDirectory(postPath, false);
+				int preCount = importDirectory(effectivePrePath, true);
+				int postCount = importDirectory(effectivePostPath, false);
 				System.out.println("Imported " + preCount + " pre-survey and " + postCount + " post-survey records.");
 				System.out.println();
 
@@ -483,6 +506,12 @@ public class App implements Callable<Integer>
 				System.out.println("Email matches: " + result.emailMatches());
 				System.out.println("Name matches: " + result.nameMatches());
 				System.out.println("Total new matches: " + result.totalMatches());
+				System.out.println();
+
+				// Step 4: Restore manual matches from persistence file
+				System.out.println("=== Step 4: Restoring manual matches ===");
+				int restoredCount = matchingService.applyStoredManualMatches();
+				System.out.println("Restored " + restoredCount + " manual match(es) from persistence file.");
 				System.out.println();
 
 				System.out.println("=== Reload complete ===");

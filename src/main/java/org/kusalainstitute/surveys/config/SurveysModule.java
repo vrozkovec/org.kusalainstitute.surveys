@@ -9,6 +9,7 @@ import org.jdbi.v3.core.mapper.reflect.SnakeCaseColumnNameMatcher;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.kusalainstitute.surveys.service.AnalysisService;
 import org.kusalainstitute.surveys.service.ImportService;
+import org.kusalainstitute.surveys.service.ManualMatchPersistenceService;
 import org.kusalainstitute.surveys.service.MatchingService;
 import org.kusalainstitute.surveys.service.TranslationService;
 import org.kusalainstitute.surveys.utils.translations.deepl.RetrofitDeeplModule;
@@ -43,6 +44,7 @@ public class SurveysModule extends AbstractModule
 		// Bind services
 		bind(TranslationService.class).in(Singleton.class);
 		bind(ImportService.class).in(Singleton.class);
+		bind(ManualMatchPersistenceService.class).in(Singleton.class);
 		bind(MatchingService.class).in(Singleton.class);
 		bind(AnalysisService.class).in(Singleton.class);
 	}

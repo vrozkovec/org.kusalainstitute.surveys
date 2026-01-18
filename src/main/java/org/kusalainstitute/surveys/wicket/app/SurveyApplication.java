@@ -12,6 +12,8 @@ import org.jdbi.v3.core.Jdbi;
 import org.kusalainstitute.surveys.config.SurveysModule;
 import org.kusalainstitute.surveys.wicket.pages.AnswersPage;
 import org.kusalainstitute.surveys.wicket.pages.HomePage;
+import org.kusalainstitute.surveys.wicket.pages.MatchManagementPage;
+import org.kusalainstitute.surveys.wicket.pages.SituationAnalysisPage;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -70,7 +72,9 @@ public class SurveyApplication extends WebApplication
 		getHeaderResponseDecorators()
 			.add(response -> new JavaScriptFilteredIntoFooterHeaderResponse(response, "footer-container"));
 
+		mountPage("analysis", SituationAnalysisPage.class);
 		mountPage("answers", AnswersPage.class);
+		mountPage("matches", MatchManagementPage.class);
 
 	}
 
@@ -82,6 +86,16 @@ public class SurveyApplication extends WebApplication
 	public Jdbi getJdbi()
 	{
 		return injector.getInstance(Jdbi.class);
+	}
+
+	/**
+	 * Returns the Guice injector for accessing services.
+	 *
+	 * @return the Guice injector
+	 */
+	public Injector getInjector()
+	{
+		return injector;
 	}
 
 	/**

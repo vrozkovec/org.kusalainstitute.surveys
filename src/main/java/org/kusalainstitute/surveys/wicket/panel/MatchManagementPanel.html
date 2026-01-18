@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html xmlns:wicket="http://wicket.apache.org">
+<body>
+<wicket:panel>
+	<div class="container-fluid">
+		<h2>Match Management</h2>
+
+		<!-- Feedback Panel -->
+		<div wicket:id="feedback" class="mb-3"></div>
+
+		<!-- Statistics Section -->
+		<div wicket:id="statsContainer" class="row mb-4">
+			<div class="col-12">
+				<div class="alert alert-info d-flex justify-content-around align-items-center">
+					<span><strong>Total Matches:</strong> <span wicket:id="totalMatches"></span></span>
+					<span><strong>Unmatched PRE:</strong> <span wicket:id="unmatchedPreCount" class="badge bg-secondary"></span></span>
+					<span><strong>Unmatched POST:</strong> <span wicket:id="unmatchedPostCount" class="badge bg-secondary"></span></span>
+				</div>
+			</div>
+		</div>
+
+		<!-- Manual Match Form -->
+		<form wicket:id="matchForm">
+			<div wicket:id="selectionContainer" class="card mb-4">
+				<div class="card-header">
+					<h5 class="mb-0">Create Manual Match</h5>
+				</div>
+				<div class="card-body">
+					<div class="row">
+						<div class="col-md-4">
+							<label class="form-label"><strong>Selected PRE:</strong></label>
+							<div wicket:id="selectedPreLabel" class="form-control-plaintext border rounded p-2 bg-light"></div>
+						</div>
+						<div class="col-md-4">
+							<label class="form-label"><strong>Selected POST:</strong></label>
+							<div wicket:id="selectedPostLabel" class="form-control-plaintext border rounded p-2 bg-light"></div>
+						</div>
+						<div class="col-md-3">
+							<label class="form-label"><strong>Notes:</strong></label>
+							<textarea wicket:id="notes" class="form-control" rows="1" placeholder="Optional notes..."></textarea>
+						</div>
+						<div class="col-md-1 d-flex align-items-end">
+							<button wicket:id="createMatchBtn" type="submit" class="btn btn-primary">Create Match</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</form>
+
+		<!-- Current Matches Table -->
+		<div wicket:id="matchesContainer" class="card mb-4">
+			<div class="card-header">
+				<h5 class="mb-0">Current Matches</h5>
+			</div>
+			<div class="card-body p-0">
+				<div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+					<table class="table table-sm table-striped table-hover mb-0">
+						<thead class="table-dark sticky-top">
+							<tr>
+								<th>Cohort</th>
+								<th>Type</th>
+								<th>PRE Name</th>
+								<th>PRE Email</th>
+								<th>PRE Date</th>
+								<th>POST Name</th>
+								<th>POST Email</th>
+								<th>POST Date</th>
+								<th>Notes</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr wicket:id="matches">
+								<td wicket:id="cohort"></td>
+								<td><span wicket:id="matchType"></span></td>
+								<td wicket:id="preName"></td>
+								<td wicket:id="preEmail"></td>
+								<td wicket:id="preDate"></td>
+								<td wicket:id="postName"></td>
+								<td wicket:id="postEmail"></td>
+								<td wicket:id="postDate"></td>
+								<td wicket:id="notes"></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+
+		<!-- Unmatched Lists -->
+		<div class="row">
+			<!-- Unmatched PRE -->
+			<div class="col-md-6">
+				<div wicket:id="unmatchedPreContainer" class="card">
+					<div class="card-header bg-info text-white">
+						<h5 class="mb-0">Unmatched PRE</h5>
+					</div>
+					<div class="card-body p-0">
+						<div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+							<table class="table table-sm table-hover mb-0">
+								<thead class="table-secondary sticky-top">
+									<tr>
+										<th>Cohort</th>
+										<th>Name</th>
+										<th>Email</th>
+										<th>Date</th>
+										<th>Action</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr wicket:id="unmatchedPre">
+										<td wicket:id="cohort"></td>
+										<td wicket:id="name"></td>
+										<td wicket:id="email"></td>
+										<td wicket:id="date"></td>
+										<td>
+											<a wicket:id="selectBtn" href="#" class="btn btn-sm btn-outline-primary">Select</a>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Unmatched POST -->
+			<div class="col-md-6">
+				<div wicket:id="unmatchedPostContainer" class="card">
+					<div class="card-header bg-success text-white">
+						<h5 class="mb-0">Unmatched POST</h5>
+					</div>
+					<div class="card-body p-0">
+						<div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+							<table class="table table-sm table-hover mb-0">
+								<thead class="table-secondary sticky-top">
+									<tr>
+										<th>Cohort</th>
+										<th>Name</th>
+										<th>Email</th>
+										<th>Date</th>
+										<th>Action</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr wicket:id="unmatchedPost">
+										<td wicket:id="cohort"></td>
+										<td wicket:id="name"></td>
+										<td wicket:id="email"></td>
+										<td wicket:id="date"></td>
+										<td>
+											<a wicket:id="selectBtn" href="#" class="btn btn-sm btn-outline-success">Select</a>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</wicket:panel>
+</body>
+</html>

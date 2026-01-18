@@ -111,4 +111,38 @@ public interface PersonDao
 	 */
 	@SqlQuery("SELECT DISTINCT cohort FROM person ORDER BY cohort")
 	List<String> findAllCohorts();
+
+	/**
+	 * Finds a person by composite key (cohort, email, name, and survey type) joined with survey
+	 * response timestamp. This is used to restore manual matches after database rebuilds.
+	 *
+	 * @param cohort
+	 *            the cohort code
+	 * @param normalizedEmail
+	 *            the normalized email address
+	 * @param name
+	 *            the person's name
+	 * @param surveyType
+	 *            PRE or POST survey type
+	 * @param timestamp
+	 *            the survey response timestamp
+	 * @return Optional containing the person if found
+	 */
+	@SqlQuery("""
+		SELECT p.* FROM person p
+		LEFT JOIN pre_survey_response pre ON p.id = pre.person_id AND p.survey_type = 'PRE'
+		LEFT JOIN post_survey_response post ON p.id = post.person_id AND p.survey_type = 'POST'
+		WHERE p.survey_type = :surveyType
+		AND (p.normalized_email = :normalizedEmail OR p.name = :name)
+		AND (
+		    (p.survey_type = 'PRE' AND pre.timestamp = :timestamp)
+		    OR (p.survey_type = 'POST' AND post.timestamp = :timestamp)
+		)
+		LIMIT 1
+		""")
+	Optional<Person> findByCompositeKey(
+		@Bind("normalizedEmail") String normalizedEmail,
+		@Bind("name") String name,
+		@Bind("surveyType") SurveyType surveyType,
+		@Bind("timestamp") java.time.LocalDateTime timestamp);
 }
