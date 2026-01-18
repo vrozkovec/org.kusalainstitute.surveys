@@ -28,7 +28,8 @@ import picocli.CommandLine.Option;
  * CLI application for Kusala Institute Survey Analysis.
  */
 @Command(name = "surveys", mixinStandardHelpOptions = true, version = "1.0.0", description = "Kusala Institute Survey Analysis Tool", subcommands = {
-		App.InitCommand.class, App.ImportCommand.class, App.MatchCommand.class, App.AnalyzeCommand.class })
+		App.InitCommand.class, App.ImportCommand.class, App.MatchCommand.class, App.AnalyzeCommand.class,
+		App.ReloadCommand.class })
 public class App implements Callable<Integer>
 {
 
@@ -420,6 +421,133 @@ public class App implements Callable<Integer>
 				return "";
 			}
 			return s.length() > maxLen ? s.substring(0, maxLen - 3) + "..." : s;
+		}
+	}
+
+	/**
+	 * Reload all data: init database, import surveys, and run matching.
+	 */
+	@Command(name = "reload", description = "Initialize database, import all surveys from data/ directory, and run auto-matching")
+	static class ReloadCommand implements Callable<Integer>
+	{
+
+		private final Flyway flyway;
+		private final ImportService importService;
+		private final MatchingService matchingService;
+
+		@Option(names = { "--pre" }, description = "Path to pre-survey directory", defaultValue = "data/pre")
+		private Path prePath;
+
+		@Option(names = { "--post" }, description = "Path to post-survey directory", defaultValue = "data/post")
+		private Path postPath;
+
+		/**
+		 * Creates a new ReloadCommand with injected dependencies.
+		 *
+		 * @param flyway
+		 *            the Flyway instance for migrations
+		 * @param importService
+		 *            the import service
+		 * @param matchingService
+		 *            the matching service
+		 */
+		@Inject
+		public ReloadCommand(Flyway flyway, ImportService importService, MatchingService matchingService)
+		{
+			this.flyway = flyway;
+			this.importService = importService;
+			this.matchingService = matchingService;
+		}
+
+		@Override
+		public Integer call()
+		{
+			try
+			{
+				// Step 1: Initialize database
+				System.out.println("=== Step 1: Initializing database ===");
+				flyway.migrate();
+				System.out.println("Database initialized successfully.");
+				System.out.println();
+
+				// Step 2: Import surveys
+				System.out.println("=== Step 2: Importing surveys ===");
+				int preCount = importDirectory(prePath, true);
+				int postCount = importDirectory(postPath, false);
+				System.out.println("Imported " + preCount + " pre-survey and " + postCount + " post-survey records.");
+				System.out.println();
+
+				// Step 3: Run automatic matching
+				System.out.println("=== Step 3: Running automatic matching ===");
+				MatchingService.MatchResult result = matchingService.runAutoMatch();
+				System.out.println("Email matches: " + result.emailMatches());
+				System.out.println("Name matches: " + result.nameMatches());
+				System.out.println("Total new matches: " + result.totalMatches());
+				System.out.println();
+
+				System.out.println("=== Reload complete ===");
+				return 0;
+
+			}
+			catch (Exception e)
+			{
+				System.err.println("Error during reload: " + e.getMessage());
+				e.printStackTrace();
+				return 1;
+			}
+		}
+
+		/**
+		 * Imports all Excel files from a directory.
+		 *
+		 * @param dir
+		 *            the directory path
+		 * @param isPreSurvey
+		 *            true for pre-survey, false for post-survey
+		 * @return number of imported records
+		 * @throws IOException
+		 *             if import fails
+		 */
+		private int importDirectory(Path dir, boolean isPreSurvey) throws IOException
+		{
+			String type = isPreSurvey ? "pre-survey" : "post-survey";
+
+			if (!Files.exists(dir))
+			{
+				System.out.println("Directory not found: " + dir + ", skipping " + type + " import.");
+				return 0;
+			}
+
+			System.out.println("Importing " + type + " data from directory: " + dir);
+
+			List<Path> excelFiles;
+			try (var stream = Files.list(dir))
+			{
+				excelFiles = stream
+					.filter(p -> p.toString().toLowerCase().endsWith(".xlsx"))
+					.filter(Files::isRegularFile)
+					.sorted()
+					.toList();
+			}
+
+			if (excelFiles.isEmpty())
+			{
+				System.out.println("No .xlsx files found in " + dir);
+				return 0;
+			}
+
+			System.out.println("Found " + excelFiles.size() + " Excel file(s)");
+
+			int total = 0;
+			for (Path file : excelFiles)
+			{
+				int count = isPreSurvey
+					? importService.importPreSurvey(file)
+					: importService.importPostSurvey(file);
+				System.out.println("  Imported " + count + " records from " + file.getFileName());
+				total += count;
+			}
+			return total;
 		}
 	}
 }

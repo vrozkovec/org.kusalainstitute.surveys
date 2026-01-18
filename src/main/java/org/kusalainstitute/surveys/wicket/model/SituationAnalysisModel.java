@@ -4,11 +4,21 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 import org.kusalainstitute.surveys.pojo.PostSurveyResponse;
 import org.kusalainstitute.surveys.pojo.PreSurveyResponse;
+import org.kusalainstitute.surveys.pojo.enums.AppFrequency;
+import org.kusalainstitute.surveys.pojo.enums.AppTimePerSession;
+import org.kusalainstitute.surveys.pojo.enums.ChildrenAgeGroup;
+import org.kusalainstitute.surveys.pojo.enums.HowFoundKusala;
+import org.kusalainstitute.surveys.pojo.enums.ProgressAssessment;
+import org.kusalainstitute.surveys.pojo.enums.StudyDuration;
 
 /**
  * Complete data model for the situation analysis table. Contains all student rows and calculated
@@ -246,7 +256,7 @@ public class SituationAnalysisModel implements Serializable
 	}
 
 	/**
-	 * Labels for text answer columns (5 pre-survey + 9 post-survey = 14 total).
+	 * Labels for text answer columns (5 pre-survey + 10 post-survey = 15 total).
 	 */
 	public static final List<String> TEXT_COLUMN_LABELS = List.of(
 		// Pre-survey (5)
@@ -255,7 +265,8 @@ public class SituationAnalysisModel implements Serializable
 		"Other Situations (Pre)",
 		"Difficult Part (Pre)",
 		"Describe Situations (Pre)",
-		// Post-survey (9)
+		// Post-survey (10)
+		"App Usage Duration (Post)",
 		"What Helped Most (Post)",
 		"Most Difficult Overall (Post)",
 		"Most Difficult For Job (Post)",
@@ -277,7 +288,8 @@ public class SituationAnalysisModel implements Serializable
 		"Q8: In what other situations would you like to speak English better?",
 		"Q10: What is the most difficult part about not being able to express yourself?",
 		"Q11: Please describe all situations where you could not speak well enough",
-		// Post-survey (9)
+		// Post-survey (10)
+		"Q1: How long have you been using the app? If you don't use the app, please explain why.",
 		"Q5: What helped you the most during the program?",
 		"Q8: What was the most difficult thing overall?",
 		"Q9: What was the most difficult for finding a job?",
@@ -289,7 +301,7 @@ public class SituationAnalysisModel implements Serializable
 		"Q17: Any additional comments?");
 
 	/**
-	 * Full question texts for open-ended questions display panel (14 total: 5 PRE + 9 POST). These
+	 * Full question texts for open-ended questions display panel (15 total: 5 PRE + 10 POST). These
 	 * are the complete question texts for display in the qualitative summary.
 	 */
 	public static final List<OpenEndedQuestionInfo> OPEN_ENDED_QUESTIONS = List.of(
@@ -302,28 +314,30 @@ public class SituationAnalysisModel implements Serializable
 		new OpenEndedQuestionInfo("Q11",
 			"Please describe all situations where you could not speak well enough and what you wanted to say and discuss (in as much detail as possible).",
 			true, 4),
-		// Post-survey (9)
+		// Post-survey (10)
+		new OpenEndedQuestionInfo("Q1",
+			"How long have you been using the app? If you don't use the app, please explain why.", false, 5),
 		new OpenEndedQuestionInfo("Q5",
 			"Since you have been using the app, what has helped you the most? Please write as much as possible so we know how to explain the app's benefits to others.",
-			false, 5),
+			false, 6),
 		new OpenEndedQuestionInfo("Q8",
-			"What is the most difficult part when you cannot express yourself? Please explain why.", false, 6),
+			"What is the most difficult part when you cannot express yourself? Please explain why.", false, 7),
 		new OpenEndedQuestionInfo("Q9",
 			"In your opinion, what is the most difficult thing about learning English well enough to find a job or feel part of the community?",
-			false, 7),
+			false, 8),
 		new OpenEndedQuestionInfo("Q10",
 			"Besides learning new grammar and vocabulary, do you find language learning difficult in other ways? For example, in a way that affects your emotions and social experiences? Please explain.",
-			false, 8),
+			false, 9),
 		new OpenEndedQuestionInfo("Q11",
 			"Have you ever avoided a situation because you were not comfortable with your level of English? Please describe the circumstances.",
-			false, 9),
-		new OpenEndedQuestionInfo("Q12", "Do you have enough support from people to help you learn English?", false, 10),
+			false, 10),
+		new OpenEndedQuestionInfo("Q12", "Do you have enough support from people to help you learn English?", false, 11),
 		new OpenEndedQuestionInfo("Q13",
-			"Please describe the types of language resources you would like to have to help you improve faster.", false, 11),
+			"Please describe the types of language resources you would like to have to help you improve faster.", false, 12),
 		new OpenEndedQuestionInfo("Q15",
 			"If you answered \"No\" to the previous question, please tell us the reason why you do not wish to participate in a telephone or video interview.",
-			false, 12),
-		new OpenEndedQuestionInfo("Q17", "Is there anything else you would like to share?", false, 13));
+			false, 13),
+		new OpenEndedQuestionInfo("Q17", "Is there anything else you would like to share?", false, 14));
 
 	/**
 	 * Information about an open-ended question for the qualitative display panel.
@@ -341,6 +355,84 @@ public class SituationAnalysisModel implements Serializable
 		int textAnswerIndex) implements Serializable
 	{
 	}
+
+	/**
+	 * Distribution data for an enum question, showing counts per enum value.
+	 *
+	 * @param questionNumber
+	 *            the question number e.g., "PRE Q1", "POST Q2"
+	 * @param label
+	 *            short label for the question
+	 * @param fullQuestion
+	 *            full question text for tooltip
+	 * @param isPreSurvey
+	 *            true for pre-survey, false for post-survey
+	 * @param valueCounts
+	 *            map from enum label to count
+	 * @param totalResponses
+	 *            total number of responses (may be more than students for multi-select)
+	 */
+	public record EnumDistribution(String questionNumber, String label, String fullQuestion, boolean isPreSurvey,
+		Map<String, Integer> valueCounts, int totalResponses) implements Serializable
+	{
+
+		/**
+		 * Returns the maximum count across all values for bar scaling.
+		 *
+		 * @return maximum count
+		 */
+		public int getMaxCount()
+		{
+			return valueCounts.values().stream().mapToInt(Integer::intValue).max().orElse(0);
+		}
+
+		/**
+		 * Returns the percentage of a value count.
+		 *
+		 * @param count
+		 *            the count
+		 * @return percentage as integer (0-100)
+		 */
+		public int getPercent(int count)
+		{
+			return totalResponses > 0 ? count * 100 / totalResponses : 0;
+		}
+	}
+
+	/**
+	 * Labels for enum answer columns (4 PRE + 3 POST = 7 total).
+	 */
+	public static final List<String> ENUM_COLUMN_LABELS = List.of(
+		// Pre-survey (4)
+		"How Found Kusala",
+		"Study w/ Teacher",
+		"Study On Own",
+		"Children Ages",
+		// Post-survey (3)
+		"Time Per Session",
+		"App Frequency",
+		"Progress");
+
+	/**
+	 * Question numbers for enum answer columns.
+	 */
+	public static final List<String> ENUM_QUESTION_NUMBERS = List.of(
+		"PRE Q1", "PRE Q2", "PRE Q3", "PRE Q4",
+		"POST Q2", "POST Q3", "POST Q4");
+
+	/**
+	 * Full question texts for enum columns (translated from French survey).
+	 */
+	public static final List<String> ENUM_FULL_QUESTIONS = List.of(
+		// Pre-survey (4)
+		"Q1: How did you find out about Kusala Institute?",
+		"Q2: How long have you been studying English with a teacher?",
+		"Q3: How long have you been studying English on your own?",
+		"Q4: If you are a parent/guardian, what are your children's ages? (multi-select)",
+		// Post-survey (3)
+		"Q2: How much time do you spend on the app at each session?",
+		"Q3: How often do you use the app?",
+		"Q4: Have you seen progress since using the app?");
 
 	private final List<StudentRow> rows;
 	private final List<BigDecimal> speakingAverages;
@@ -410,12 +502,13 @@ public class SituationAnalysisModel implements Serializable
 			List<SingleValueData> understandingData = buildUnderstandingData(pair.pre());
 			List<SingleValueData> easeData = buildEaseData(pair.post());
 			List<TextAnswerData> textAnswers = buildTextAnswers(pair.pre(), pair.post());
+			List<EnumAnswerData> enumAnswers = buildEnumAnswers(pair.pre(), pair.post());
 
 			// Calculate individual total for speaking
 			BigDecimal studentSpeakingTotal = calculateStudentAverage(speakingData);
 
 			rows.add(new StudentRow(pair.name(), pair.personId(), pair.cohort(), studentSpeakingTotal,
-				speakingData, understandingData, easeData, textAnswers));
+				speakingData, understandingData, easeData, textAnswers, enumAnswers));
 
 			// Collect deltas for speaking averages
 			for (int i = 0; i < 11; i++)
@@ -540,14 +633,14 @@ public class SituationAnalysisModel implements Serializable
 	}
 
 	/**
-	 * Builds text answer data from pre and post survey responses. Returns a list of 14
-	 * TextAnswerData objects (5 pre-survey + 9 post-survey) in the same order as TEXT_COLUMN_LABELS.
+	 * Builds text answer data from pre and post survey responses. Returns a list of 15
+	 * TextAnswerData objects (5 pre-survey + 10 post-survey) in the same order as TEXT_COLUMN_LABELS.
 	 *
 	 * @param pre
 	 *            the pre-survey response
 	 * @param post
 	 *            the post-survey response
-	 * @return list of 14 TextAnswerData objects
+	 * @return list of 15 TextAnswerData objects
 	 */
 	private static List<TextAnswerData> buildTextAnswers(PreSurveyResponse pre, PostSurveyResponse post)
 	{
@@ -558,7 +651,8 @@ public class SituationAnalysisModel implements Serializable
 			TextAnswerData.pre("Other Situations", pre.getOtherSituationsTranslated()),
 			TextAnswerData.pre("Difficult Part", pre.getDifficultPartTranslated()),
 			TextAnswerData.pre("Describe Situations", pre.getDescribeSituationsTranslated()),
-			// Post-survey (9)
+			// Post-survey (10)
+			TextAnswerData.post("App Usage Duration", post.getAppUsageDurationTranslated()),
 			TextAnswerData.post("What Helped Most", post.getWhatHelpedMostTranslated()),
 			TextAnswerData.post("Most Difficult Overall", post.getMostDifficultOverallTranslated()),
 			TextAnswerData.post("Most Difficult For Job", post.getMostDifficultForJobTranslated()),
@@ -568,6 +662,30 @@ public class SituationAnalysisModel implements Serializable
 			TextAnswerData.post("Desired Resources", post.getDesiredResourcesTranslated()),
 			TextAnswerData.post("Interview Decline Reason", post.getInterviewDeclineReasonTranslated()),
 			TextAnswerData.post("Additional Comments", post.getAdditionalCommentsTranslated()));
+	}
+
+	/**
+	 * Builds enum answer data from pre and post survey responses. Returns a list of 7
+	 * EnumAnswerData objects (4 PRE + 3 POST) in the same order as ENUM_COLUMN_LABELS.
+	 *
+	 * @param pre
+	 *            the pre-survey response
+	 * @param post
+	 *            the post-survey response
+	 * @return list of 7 EnumAnswerData objects
+	 */
+	private static List<EnumAnswerData> buildEnumAnswers(PreSurveyResponse pre, PostSurveyResponse post)
+	{
+		return List.of(
+			// Pre-survey (4)
+			EnumAnswerData.ofHowFoundKusala(pre.getHowFoundKusala()),
+			EnumAnswerData.ofStudyWithTeacher(pre.getStudyWithTeacherDuration()),
+			EnumAnswerData.ofStudyOnOwn(pre.getStudyOnOwnDuration()),
+			EnumAnswerData.ofChildrenAges(pre.getChildrenAges()),
+			// Post-survey (3)
+			EnumAnswerData.ofAppTimePerSession(post.getAppTimePerSession()),
+			EnumAnswerData.ofAppFrequency(post.getAppFrequency()),
+			EnumAnswerData.ofProgressAssessment(post.getProgressAssessment()));
 	}
 
 	/**
@@ -746,6 +864,193 @@ public class SituationAnalysisModel implements Serializable
 				null, // no question number for text columns
 				TEXT_COLUMN_FULL_QUESTIONS.get(i)))
 			.toList();
+	}
+
+	/**
+	 * Returns header information for enum answer columns (4 PRE + 3 POST = 7 total).
+	 *
+	 * @return list of 7 HeaderInfo objects for enum answer columns
+	 */
+	public List<HeaderInfo> getEnumHeaderInfos()
+	{
+		return IntStream.range(0, ENUM_COLUMN_LABELS.size())
+			.mapToObj(i -> new HeaderInfo(
+				ENUM_COLUMN_LABELS.get(i),
+				ENUM_QUESTION_NUMBERS.get(i),
+				ENUM_FULL_QUESTIONS.get(i)))
+			.toList();
+	}
+
+	/**
+	 * Returns enum distributions for the summary panel. Calculates counts per enum value
+	 * for each of the 7 enum questions (4 PRE + 3 POST).
+	 *
+	 * @return list of 7 EnumDistribution objects
+	 */
+	public List<EnumDistribution> getEnumDistributions()
+	{
+		List<EnumDistribution> result = new ArrayList<>();
+
+		// PRE Q1: HowFoundKusala
+		Map<String, Integer> howFoundCounts = new LinkedHashMap<>();
+		for (HowFoundKusala value : HowFoundKusala.values())
+		{
+			howFoundCounts.put(value.getEnglishLabel(), 0);
+		}
+		int preQ1Total = 0;
+		for (StudentRow row : rows)
+		{
+			if (row.enumAnswers() != null && !row.enumAnswers().isEmpty())
+			{
+				EnumAnswerData data = row.enumAnswers().get(0);
+				if (!"-".equals(data.displayValue()))
+				{
+					howFoundCounts.merge(data.displayValue(), 1, Integer::sum);
+					preQ1Total++;
+				}
+			}
+		}
+		result.add(new EnumDistribution("PRE Q1", ENUM_COLUMN_LABELS.get(0), ENUM_FULL_QUESTIONS.get(0), true,
+			howFoundCounts, preQ1Total));
+
+		// PRE Q2: StudyDuration (with teacher)
+		Map<String, Integer> studyTeacherCounts = new LinkedHashMap<>();
+		for (StudyDuration value : StudyDuration.values())
+		{
+			studyTeacherCounts.put(value.getEnglishLabel(), 0);
+		}
+		int preQ2Total = 0;
+		for (StudentRow row : rows)
+		{
+			if (row.enumAnswers() != null && row.enumAnswers().size() > 1)
+			{
+				EnumAnswerData data = row.enumAnswers().get(1);
+				if (!"-".equals(data.displayValue()))
+				{
+					studyTeacherCounts.merge(data.displayValue(), 1, Integer::sum);
+					preQ2Total++;
+				}
+			}
+		}
+		result.add(new EnumDistribution("PRE Q2", ENUM_COLUMN_LABELS.get(1), ENUM_FULL_QUESTIONS.get(1), true,
+			studyTeacherCounts, preQ2Total));
+
+		// PRE Q3: StudyDuration (on own)
+		Map<String, Integer> studyOwnCounts = new LinkedHashMap<>();
+		for (StudyDuration value : StudyDuration.values())
+		{
+			studyOwnCounts.put(value.getEnglishLabel(), 0);
+		}
+		int preQ3Total = 0;
+		for (StudentRow row : rows)
+		{
+			if (row.enumAnswers() != null && row.enumAnswers().size() > 2)
+			{
+				EnumAnswerData data = row.enumAnswers().get(2);
+				if (!"-".equals(data.displayValue()))
+				{
+					studyOwnCounts.merge(data.displayValue(), 1, Integer::sum);
+					preQ3Total++;
+				}
+			}
+		}
+		result.add(new EnumDistribution("PRE Q3", ENUM_COLUMN_LABELS.get(2), ENUM_FULL_QUESTIONS.get(2), true,
+			studyOwnCounts, preQ3Total));
+
+		// PRE Q4: ChildrenAgeGroup (multi-select - count each selection)
+		Map<String, Integer> childrenCounts = new LinkedHashMap<>();
+		for (ChildrenAgeGroup value : ChildrenAgeGroup.values())
+		{
+			childrenCounts.put(value.getEnglishLabel(), 0);
+		}
+		int preQ4Total = 0;
+		for (StudentRow row : rows)
+		{
+			if (row.enumAnswers() != null && row.enumAnswers().size() > 3)
+			{
+				EnumAnswerData data = row.enumAnswers().get(3);
+				if (!"-".equals(data.displayValue()))
+				{
+					// Multi-select: split by comma and count each
+					String[] values = data.displayValue().split(",\\s*");
+					for (String value : values)
+					{
+						childrenCounts.merge(value.trim(), 1, Integer::sum);
+						preQ4Total++;
+					}
+				}
+			}
+		}
+		result.add(new EnumDistribution("PRE Q4", ENUM_COLUMN_LABELS.get(3), ENUM_FULL_QUESTIONS.get(3), true,
+			childrenCounts, preQ4Total));
+
+		// POST Q2: AppTimePerSession (time per session)
+		Map<String, Integer> timePerSessionCounts = new LinkedHashMap<>();
+		for (AppTimePerSession value : AppTimePerSession.values())
+		{
+			timePerSessionCounts.put(value.getEnglishLabel(), 0);
+		}
+		int postQ2Total = 0;
+		for (StudentRow row : rows)
+		{
+			if (row.enumAnswers() != null && row.enumAnswers().size() > 4)
+			{
+				EnumAnswerData data = row.enumAnswers().get(4);
+				if (!"-".equals(data.displayValue()))
+				{
+					timePerSessionCounts.merge(data.displayValue(), 1, Integer::sum);
+					postQ2Total++;
+				}
+			}
+		}
+		result.add(new EnumDistribution("POST Q2", ENUM_COLUMN_LABELS.get(4), ENUM_FULL_QUESTIONS.get(4), false,
+			timePerSessionCounts, postQ2Total));
+
+		// POST Q3: AppFrequency
+		Map<String, Integer> frequencyCounts = new LinkedHashMap<>();
+		for (AppFrequency value : AppFrequency.values())
+		{
+			frequencyCounts.put(value.getEnglishLabel(), 0);
+		}
+		int postQ3Total = 0;
+		for (StudentRow row : rows)
+		{
+			if (row.enumAnswers() != null && row.enumAnswers().size() > 5)
+			{
+				EnumAnswerData data = row.enumAnswers().get(5);
+				if (!"-".equals(data.displayValue()))
+				{
+					frequencyCounts.merge(data.displayValue(), 1, Integer::sum);
+					postQ3Total++;
+				}
+			}
+		}
+		result.add(new EnumDistribution("POST Q3", ENUM_COLUMN_LABELS.get(5), ENUM_FULL_QUESTIONS.get(5), false,
+			frequencyCounts, postQ3Total));
+
+		// POST Q4: ProgressAssessment
+		Map<String, Integer> progressCounts = new LinkedHashMap<>();
+		for (ProgressAssessment value : ProgressAssessment.values())
+		{
+			progressCounts.put(value.getEnglishLabel(), 0);
+		}
+		int postQ4Total = 0;
+		for (StudentRow row : rows)
+		{
+			if (row.enumAnswers() != null && row.enumAnswers().size() > 6)
+			{
+				EnumAnswerData data = row.enumAnswers().get(6);
+				if (!"-".equals(data.displayValue()))
+				{
+					progressCounts.merge(data.displayValue(), 1, Integer::sum);
+					postQ4Total++;
+				}
+			}
+		}
+		result.add(new EnumDistribution("POST Q4", ENUM_COLUMN_LABELS.get(6), ENUM_FULL_QUESTIONS.get(6), false,
+			progressCounts, postQ4Total));
+
+		return result;
 	}
 
 	/**

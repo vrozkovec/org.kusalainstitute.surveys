@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html xmlns:wicket="http://wicket.apache.org">
+<head>
+<wicket:head>
+	<style>
+/* Enum Distribution Summary Panel */
+.enum-distribution-summary {
+	margin-top: 30px;
+	padding: 20px;
+	background-color: #f8f9fa;
+	border-radius: 8px;
+	border: 1px solid #dee2e6;
+}
+
+.enum-distribution-summary h4 {
+	margin-bottom: 20px;
+	color: #333;
+}
+
+.enum-section {
+	margin-bottom: 30px;
+}
+
+.enum-section h5 {
+	margin-bottom: 15px;
+	padding-bottom: 8px;
+	border-bottom: 2px solid;
+}
+
+.enum-section-pre h5 {
+	color: #1976d2;
+	border-color: #1976d2;
+}
+
+.enum-section-post h5 {
+	color: #388e3c;
+	border-color: #388e3c;
+}
+
+.enum-grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 20px;
+}
+
+@media (max-width: 992px) {
+	.enum-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+.enum-card {
+	background-color: #fff;
+	border-radius: 8px;
+	padding: 15px;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.enum-card-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 10px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid #e9ecef;
+	cursor: help;
+}
+
+.enum-card-header .question-number {
+	font-size: 12px;
+	font-weight: bold;
+	color: #666;
+	padding: 2px 6px;
+	border-radius: 4px;
+	background-color: #e9ecef;
+}
+
+.enum-card-header .label {
+	font-weight: 600;
+	color: #333;
+}
+
+.response-count {
+	font-size: 12px;
+	color: #666;
+	margin-bottom: 10px;
+}
+
+.distribution-table {
+	width: 100%;
+	font-size: 12px;
+}
+
+.distribution-table td {
+	padding: 4px 0;
+	vertical-align: middle;
+}
+
+.distribution-table .value-label {
+	max-width: 180px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.distribution-table .count {
+	width: 40px;
+	text-align: right;
+	font-weight: 500;
+}
+
+.distribution-table .percent {
+	width: 50px;
+	text-align: right;
+	color: #666;
+}
+
+.distribution-table .bar-container {
+	width: 100px;
+	padding-left: 10px;
+}
+
+.distribution-table .bar-wrapper {
+	height: 12px;
+	background-color: #e9ecef;
+	border-radius: 3px;
+	overflow: hidden;
+}
+
+.distribution-table .bar {
+	height: 100%;
+	border-radius: 3px;
+	transition: width 0.3s ease;
+}
+
+.distribution-table .bar-pre {
+	background-color: #2196f3;
+}
+
+.distribution-table .bar-post {
+	background-color: #4caf50;
+}
+</style>
+</wicket:head>
+</head>
+<body>
+	<wicket:panel>
+		<div class="enum-distribution-summary">
+			<h4>Response Distribution: Demographics &amp; App Usage (Q1-Q4)</h4>
+
+			<!-- PRE Survey Section -->
+			<div class="enum-section enum-section-pre">
+				<h5>Pre-Survey Questions</h5>
+				<div class="enum-grid">
+					<div class="enum-card" wicket:id="preDistributions">
+						<div class="enum-card-header" wicket:id="cardHeader">
+							<span class="question-number" wicket:id="questionNumber"></span>
+							<span class="label" wicket:id="label"></span>
+						</div>
+						<div class="response-count" wicket:id="responseCount"></div>
+						<table class="distribution-table">
+							<tr wicket:id="distributionRows">
+								<td class="value-label" wicket:id="valueLabel"></td>
+								<td class="count" wicket:id="count"></td>
+								<td class="percent" wicket:id="percent"></td>
+								<td class="bar-container">
+									<div class="bar-wrapper">
+										<div class="bar" wicket:id="bar"></div>
+									</div>
+								</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</div>
+
+			<!-- POST Survey Section -->
+			<div class="enum-section enum-section-post">
+				<h5>Post-Survey Questions (Q2-Q4)</h5>
+				<div class="enum-grid">
+					<div class="enum-card" wicket:id="postDistributions">
+						<div class="enum-card-header" wicket:id="cardHeader">
+							<span class="question-number" wicket:id="questionNumber"></span>
+							<span class="label" wicket:id="label"></span>
+						</div>
+						<div class="response-count" wicket:id="responseCount"></div>
+						<table class="distribution-table">
+							<tr wicket:id="distributionRows">
+								<td class="value-label" wicket:id="valueLabel"></td>
+								<td class="count" wicket:id="count"></td>
+								<td class="percent" wicket:id="percent"></td>
+								<td class="bar-container">
+									<div class="bar-wrapper">
+										<div class="bar" wicket:id="bar"></div>
+									</div>
+								</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</wicket:panel>
+</body>
+</html>

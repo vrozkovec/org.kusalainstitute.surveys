@@ -29,7 +29,7 @@ public interface PostSurveyDao
 	@SqlUpdate("""
 		INSERT INTO post_survey_response (
 		    person_id, timestamp, source_file, row_num,
-		    app_usage_duration, app_time_per_session, app_frequency, progress_assessment,
+		    app_usage_duration_original, app_usage_duration_translated, app_time_per_session, app_frequency, progress_assessment,
 		    what_helped_most_original, what_helped_most_translated,
 		    speak_directions, speak_healthcare, speak_authorities, speak_job_interview,
 		    speak_informal, speak_children_education, speak_landlord, speak_social_events,
@@ -50,7 +50,7 @@ public interface PostSurveyDao
 		    avg_speaking_ability, avg_difficulty_expressing
 		) VALUES (
 		    :personId, :timestamp, :sourceFile, :rowNumber,
-		    :appUsageDuration, :appTimePerSession, :appFrequency, :progressAssessment,
+		    :appUsageDurationOriginal, :appUsageDurationTranslated, :appTimePerSession, :appFrequency, :progressAssessment,
 		    :whatHelpedMostOriginal, :whatHelpedMostTranslated,
 		    :speakDirections, :speakHealthcare, :speakAuthorities, :speakJobInterview,
 		    :speakInformal, :speakChildrenEducation, :speakLandlord, :speakSocialEvents,

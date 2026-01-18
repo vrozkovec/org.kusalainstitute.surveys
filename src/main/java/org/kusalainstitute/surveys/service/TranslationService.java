@@ -127,6 +127,7 @@ public class TranslationService
 	 */
 	public void translateAll(PostSurveyResponse response)
 	{
+		response.setAppUsageDurationTranslated(translate(response.getAppUsageDurationOriginal()));
 		response.setWhatHelpedMostTranslated(translate(response.getWhatHelpedMostOriginal()));
 		response.setMostDifficultOverallTranslated(translate(response.getMostDifficultOverallOriginal()));
 		response.setMostDifficultForJobTranslated(translate(response.getMostDifficultForJobOriginal()));

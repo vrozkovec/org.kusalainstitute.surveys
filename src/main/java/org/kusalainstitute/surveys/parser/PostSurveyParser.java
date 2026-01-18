@@ -156,7 +156,7 @@ public class PostSurveyParser extends ExcelParser
 		response.setRowNumber(rowNum);
 
 		// App usage Q1-Q4
-		response.setAppUsageDuration(appTimePerSessionMapper.map(getStringValue(row, COL_APP_DURATION)));
+		response.setAppUsageDurationOriginal(getStringValue(row, COL_APP_DURATION));
 		response.setAppTimePerSession(appTimePerSessionMapper.map(getStringValue(row, COL_TIME_PER_SESSION)));
 		response.setAppFrequency(appFrequencyMapper.map(getStringValue(row, COL_FREQUENCY)));
 		response.setProgressAssessment(progressAssessmentMapper.map(getStringValue(row, COL_PROGRESS)));

@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Represents one student row in the situation analysis table. Contains the student's identity and
  * situation data for speaking (pre/post comparison), understanding (pre Q9 only), ease (post Q7
- * inverted only), and text answers from both pre and post surveys.
+ * inverted only), text answers from both pre and post surveys, and enum answers for PRE/POST Q1-Q4.
  */
 public record StudentRow(
 	String name,
@@ -17,7 +17,8 @@ public record StudentRow(
 	List<SituationData> speakingData,
 	List<SingleValueData> understandingData,
 	List<SingleValueData> easeData,
-	List<TextAnswerData> textAnswers) implements Serializable
+	List<TextAnswerData> textAnswers,
+	List<EnumAnswerData> enumAnswers) implements Serializable
 {
 
 	/**

@@ -11,6 +11,7 @@ import org.apache.wicket.markup.html.panel.GenericPanel;
 import org.apache.wicket.markup.repeater.RepeatingView;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
+import org.kusalainstitute.surveys.wicket.model.EnumAnswerData;
 import org.kusalainstitute.surveys.wicket.model.SingleValueData;
 import org.kusalainstitute.surveys.wicket.model.SituationAnalysisModel;
 import org.kusalainstitute.surveys.wicket.model.SituationAnalysisModel.HeaderInfo;
@@ -49,6 +50,7 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 
 		add(new ImprovementSummaryPanel("improvementSummary", getModel()));
 		add(new RatingDistributionAllPanel("ratingDistribution", getModel()));
+		add(new EnumDistributionSummaryPanel("enumDistribution", getModel()));
 
 		SituationAnalysisModel data = getModelObject();
 
@@ -80,6 +82,15 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 		WebMarkupContainer textPostGroupHeader = new WebMarkupContainer("textPostGroupHeader");
 		textPostGroupHeader.add(new TooltipBehavior(Model.of("Free-text responses from the post-survey"), tooltipConfig));
 		add(textPostGroupHeader);
+
+		// Enum group headers
+		WebMarkupContainer enumPreGroupHeader = new WebMarkupContainer("enumPreGroupHeader");
+		enumPreGroupHeader.add(new TooltipBehavior(Model.of("Pre-survey demographics and background (Q1-Q4)"), tooltipConfig));
+		add(enumPreGroupHeader);
+
+		WebMarkupContainer enumPostGroupHeader = new WebMarkupContainer("enumPostGroupHeader");
+		enumPostGroupHeader.add(new TooltipBehavior(Model.of("Post-survey app usage and progress (Q1-Q4)"), tooltipConfig));
+		add(enumPostGroupHeader);
 
 		// Situation name headers - Speaking group
 		add(new ListView<>("speakingHeaders", data.getSpeakingHeaderInfos())
@@ -131,6 +142,22 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 				item.add(new TooltipBehavior(Model.of(info.tooltip()), tooltipConfig));
 				// Apply CSS class based on position (first 5 are pre, rest are post)
 				String cssClass = item.getIndex() < 5 ? "header-text-pre" : "header-text-post";
+				item.add(AttributeModifier.append("class", cssClass));
+			}
+		});
+
+		// Enum answer column headers with tooltips
+		add(new ListView<>("enumHeaders", data.getEnumHeaderInfos())
+		{
+			@Override
+			protected void populateItem(ListItem<HeaderInfo> item)
+			{
+				HeaderInfo info = item.getModelObject();
+				item.add(new Label("headerLabel", info.label()));
+				item.add(new Label("questionNumber", info.questionNumber()));
+				item.add(new TooltipBehavior(Model.of(info.tooltip()), tooltipConfig));
+				// Apply CSS class based on position (first 4 are pre, rest are post)
+				String cssClass = item.getIndex() < 4 ? "header-enum-pre" : "header-enum-post";
 				item.add(AttributeModifier.append("class", cssClass));
 			}
 		});
@@ -192,6 +219,16 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 					protected void populateItem(ListItem<TextAnswerData> cellItem)
 					{
 						populateTextCell(cellItem);
+					}
+				});
+
+				// Enum answer cells
+				item.add(new ListView<>("enumCells", row.enumAnswers())
+				{
+					@Override
+					protected void populateItem(ListItem<EnumAnswerData> cellItem)
+					{
+						populateEnumCell(cellItem);
 					}
 				});
 			}
@@ -328,6 +365,23 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 
 		// Text value
 		cellItem.add(new Label("textValue", data.getDisplayValue()));
+
+		// Apply CSS class for pre/post styling
+		cellItem.add(AttributeModifier.append("class", data.getCssClass()));
+	}
+
+	/**
+	 * Populates an enum answer cell with styled background based on survey type.
+	 *
+	 * @param cellItem
+	 *            the list item for the enum answer cell
+	 */
+	private void populateEnumCell(ListItem<EnumAnswerData> cellItem)
+	{
+		EnumAnswerData data = cellItem.getModelObject();
+
+		// Enum value
+		cellItem.add(new Label("enumValue", data.displayValue()));
 
 		// Apply CSS class for pre/post styling
 		cellItem.add(AttributeModifier.append("class", data.getCssClass()));

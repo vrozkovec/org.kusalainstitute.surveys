@@ -21,8 +21,8 @@
 	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
 		Helvetica, Arial, sans-serif;
 	font-size: 13px;
-	min-width: 6500px;
-	/* Wide enough for 33 situation columns + 13 text columns + student */
+	min-width: 7800px;
+	/* Wide enough for 33 situation columns + 14 text columns + 8 enum columns + student */
 }
 
 /* Sticky Column Setup */
@@ -317,6 +317,46 @@
 	background-color: #388e3c;
 }
 
+/* Enum Answer Columns */
+.situation-table .enum-cell {
+	min-width: 120px;
+	max-width: 160px;
+	white-space: normal;
+	font-size: 11px;
+	vertical-align: middle;
+	padding: 6px 8px;
+}
+
+.situation-table .enum-cell-pre {
+	background-color: #e3f2fd; /* Light blue */
+}
+
+.situation-table .enum-cell-post {
+	background-color: #e8f5e9; /* Light green */
+}
+
+.situation-table .header-enum-pre {
+	background-color: #2196f3; /* Blue */
+	text-align: center;
+	min-width: 120px;
+}
+
+.situation-table .header-enum-post {
+	background-color: #4caf50; /* Green */
+	text-align: center;
+	min-width: 120px;
+}
+
+.situation-table .header-group-enum-pre {
+	text-align: center;
+	background-color: #1976d2;
+}
+
+.situation-table .header-group-enum-post {
+	text-align: center;
+	background-color: #388e3c;
+}
+
 /* Question number styling in headers */
 .situation-table th .question-number {
 	display: block;
@@ -355,8 +395,10 @@
 						<th colspan="11" class="header-group-ease" wicket:id="easeGroupHeader">Ease (Q7 Inv)</th>
 						<th colspan="5" class="header-group-text-pre" wicket:id="textPreGroupHeader">Pre-Survey Text
 							Answers</th>
-						<th colspan="9" class="header-group-text-post" wicket:id="textPostGroupHeader">Post-Survey Text
+						<th colspan="10" class="header-group-text-post" wicket:id="textPostGroupHeader">Post-Survey Text
 							Answers</th>
+						<th colspan="4" class="header-group-enum-pre" wicket:id="enumPreGroupHeader">Pre-Survey Q1-Q4</th>
+						<th colspan="3" class="header-group-enum-post" wicket:id="enumPostGroupHeader">Post-Survey Q2-Q4</th>
 					</tr>
 					<!-- Situation names row -->
 					<tr>
@@ -375,6 +417,10 @@
 						<!-- Text answer column headers -->
 						<th wicket:id="textHeaders">
 							<span wicket:id="headerLabel"></span>
+						</th>
+						<!-- Enum answer column headers -->
+						<th wicket:id="enumHeaders">
+							<span wicket:id="headerLabel"></span> <span class="question-number" wicket:id="questionNumber"></span>
 						</th>
 					</tr>
 				</thead>
@@ -423,6 +469,11 @@
 						<td class="text-cell" wicket:id="textCells">
 							<span wicket:id="textValue"></span>
 						</td>
+
+						<!-- Enum answer cells -->
+						<td class="enum-cell" wicket:id="enumCells">
+							<span wicket:id="enumValue"></span>
+						</td>
 					</tr>
 				</tbody>
 				<tfoot>
@@ -456,6 +507,7 @@
 		<div class="container mt-5">
 			<div wicket:id="improvementSummary"></div>
 			<div wicket:id="ratingDistribution"></div>
+			<div wicket:id="enumDistribution"></div>
 		</div>
 	</wicket:panel>
 </body>

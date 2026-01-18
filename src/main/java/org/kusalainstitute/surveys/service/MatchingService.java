@@ -3,8 +3,10 @@ package org.kusalainstitute.surveys.service;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.similarity.LevenshteinDistance;
@@ -31,6 +33,7 @@ public class MatchingService
 
 	private static final Logger LOG = LoggerFactory.getLogger(MatchingService.class);
 	private static final double NAME_SIMILARITY_THRESHOLD = 0.8;
+	private static final String WILDCARD_COHORT = "all?";
 
 	private final Jdbi jdbi;
 	private final LevenshteinDistance levenshtein;
@@ -50,6 +53,12 @@ public class MatchingService
 
 	/**
 	 * Runs automatic matching on all unmatched persons.
+	 * <p>
+	 * Handles special cases:
+	 * <ul>
+	 * <li>"all?" cohort: PRE responses with cohort="all?" are matched against ALL non-"all?" POST cohorts</li>
+	 * <li>Shared emails: Emails used by multiple people with different names are matched by name only</li>
+	 * </ul>
 	 *
 	 * @return number of new matches created
 	 */
@@ -66,31 +75,69 @@ public class MatchingService
 
 			LOG.info("Found {} unmatched pre-survey and {} unmatched post-survey persons", prePeople.size(), postPeople.size());
 
+			// Identify shared emails (same email, different names) - these should match by name only
+			Set<String> sharedEmails = findSharedEmails(prePeople);
+			if (!sharedEmails.isEmpty())
+			{
+				LOG.info("Found {} shared emails that will be matched by name only", sharedEmails.size());
+			}
+
 			// Group by cohort for efficient matching
-			Map<String, List<Person>> preByCohor = groupByCohort(prePeople);
+			Map<String, List<Person>> preByCohort = groupByCohort(prePeople);
 			Map<String, List<Person>> postByCohort = groupByCohort(postPeople);
+
+			// Collect all non-wildcard POST cohorts for "all?" matching
+			List<Person> allNonWildcardPost = postByCohort.entrySet().stream()
+				.filter(e -> !WILDCARD_COHORT.equals(e.getKey()))
+				.flatMap(e -> e.getValue().stream())
+				.toList();
 
 			int emailMatches = 0;
 			int nameMatches = 0;
 
-			for (String cohort : preByCohor.keySet())
-			{
-				List<Person> preInCohort = preByCohor.get(cohort);
-				List<Person> postInCohort = postByCohort.getOrDefault(cohort, List.of());
+			// Track globally matched POST people (for "all?" cohort matching across all cohorts)
+			Set<Long> matchedPostIds = new HashSet<>();
 
-				if (postInCohort.isEmpty())
+			for (String preCohort : preByCohort.keySet())
+			{
+				List<Person> preInCohort = preByCohort.get(preCohort);
+
+				// Determine target POST people: "all?" matches against all non-wildcard cohorts
+				List<Person> targetPostPeople;
+				if (WILDCARD_COHORT.equals(preCohort))
+				{
+					targetPostPeople = allNonWildcardPost;
+					LOG.info("Processing '{}' cohort PRE people ({}) against all POST cohorts ({})",
+						preCohort, preInCohort.size(), targetPostPeople.size());
+				}
+				else
+				{
+					targetPostPeople = postByCohort.getOrDefault(preCohort, List.of());
+				}
+
+				if (targetPostPeople.isEmpty())
 				{
 					continue;
 				}
 
-				// First pass: exact email matching
+				// Filter out already matched POST people
 				List<Person> unmatchedPre = new ArrayList<>(preInCohort);
-				List<Person> unmatchedPost = new ArrayList<>(postInCohort);
+				List<Person> unmatchedPost = targetPostPeople.stream()
+					.filter(p -> !matchedPostIds.contains(p.getId()))
+					.collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
 
+				// First pass: exact email matching (skip people with shared emails)
 				for (Person pre : new ArrayList<>(unmatchedPre))
 				{
 					if (pre.isRequiresManualMatch() || StringUtils.isBlank(pre.getNormalizedEmail()))
 					{
+						continue;
+					}
+
+					// Skip email matching for shared emails - these should match by name only
+					if (sharedEmails.contains(pre.getNormalizedEmail()))
+					{
+						LOG.debug("Skipping email match for {} - shared email {}", pre.getName(), pre.getNormalizedEmail());
 						continue;
 					}
 
@@ -103,9 +150,12 @@ public class MatchingService
 
 						if (pre.getNormalizedEmail().equals(post.getNormalizedEmail()))
 						{
-							createMatch(matchDao, cohort, pre, post, MatchType.AUTO_EMAIL, BigDecimal.ONE);
+							// Use POST person's cohort for match record (especially important for "all?" PRE)
+							String matchCohort = WILDCARD_COHORT.equals(preCohort) ? post.getCohort() : preCohort;
+							createMatch(matchDao, matchCohort, pre, post, MatchType.AUTO_EMAIL, BigDecimal.ONE);
 							unmatchedPre.remove(pre);
 							unmatchedPost.remove(post);
+							matchedPostIds.add(post.getId());
 							emailMatches++;
 							break;
 						}
@@ -140,9 +190,12 @@ public class MatchingService
 
 					if (bestMatch != null)
 					{
-						createMatch(matchDao, cohort, pre, bestMatch, MatchType.AUTO_NAME, BigDecimal.valueOf(bestSimilarity));
+						// Use POST person's cohort for match record (especially important for "all?" PRE)
+						String matchCohort = WILDCARD_COHORT.equals(preCohort) ? bestMatch.getCohort() : preCohort;
+						createMatch(matchDao, matchCohort, pre, bestMatch, MatchType.AUTO_NAME, BigDecimal.valueOf(bestSimilarity));
 						unmatchedPre.remove(pre);
 						unmatchedPost.remove(bestMatch);
+						matchedPostIds.add(bestMatch.getId());
 						nameMatches++;
 					}
 				}
@@ -257,6 +310,47 @@ public class MatchingService
 			result.computeIfAbsent(person.getCohort(), k -> new ArrayList<>()).add(person);
 		}
 		return result;
+	}
+
+	/**
+	 * Finds emails that are shared by multiple people with different names.
+	 * <p>
+	 * Some survey respondents didn't have their own email address, so one email is shared by
+	 * multiple family members or friends with different names. For these cases, matching should
+	 * be based on name only, not email, to avoid incorrect matches.
+	 *
+	 * @param people
+	 *            list of people to analyze
+	 * @return set of normalized emails that are shared by multiple different-named people
+	 */
+	private Set<String> findSharedEmails(List<Person> people)
+	{
+		// Map: email -> set of unique names using that email
+		Map<String, Set<String>> emailToNames = new HashMap<>();
+
+		for (Person person : people)
+		{
+			String email = person.getNormalizedEmail();
+			String name = person.getName();
+
+			if (StringUtils.isNotBlank(email) && StringUtils.isNotBlank(name))
+			{
+				emailToNames.computeIfAbsent(email, k -> new HashSet<>()).add(name.toLowerCase().trim());
+			}
+		}
+
+		// Find emails with multiple different names
+		Set<String> sharedEmails = new HashSet<>();
+		for (Map.Entry<String, Set<String>> entry : emailToNames.entrySet())
+		{
+			if (entry.getValue().size() > 1)
+			{
+				sharedEmails.add(entry.getKey());
+				LOG.debug("Shared email detected: {} used by {} different people", entry.getKey(), entry.getValue().size());
+			}
+		}
+
+		return sharedEmails;
 	}
 
 	/**

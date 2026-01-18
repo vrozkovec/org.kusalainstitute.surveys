@@ -90,8 +90,11 @@ create table post_survey_response (
     source_file varchar(255),
     row_num int,
 
-    -- App usage Q1-Q4
-    app_usage_duration varchar(255),
+    -- Q1 Free text
+    app_usage_duration_original varchar(255),
+    app_usage_duration_translated varchar(255),
+
+    -- App usage Q2-Q4
     app_time_per_session varchar(255),
     app_frequency varchar(255),
     progress_assessment varchar(255),
