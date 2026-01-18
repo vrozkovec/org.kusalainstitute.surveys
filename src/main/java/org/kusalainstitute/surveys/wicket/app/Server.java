@@ -47,7 +47,7 @@ public class Server extends JettyRunner
 	@Override
 	public String getSessionSchemaTableName()
 	{
-		return "cz_aperto_foodlist";
+		return "org_kusalainstitute_surveys";
 	}
 
 	@Override
