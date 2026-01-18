@@ -10,6 +10,7 @@ import org.apache.wicket.settings.ExceptionSettings;
 import org.apache.wicket.util.lang.Bytes;
 import org.jdbi.v3.core.Jdbi;
 import org.kusalainstitute.surveys.config.SurveysModule;
+import org.kusalainstitute.surveys.wicket.pages.AIExportPage;
 import org.kusalainstitute.surveys.wicket.pages.AnswersPage;
 import org.kusalainstitute.surveys.wicket.pages.HomePage;
 import org.kusalainstitute.surveys.wicket.pages.MatchManagementPage;
@@ -75,6 +76,7 @@ public class SurveyApplication extends WebApplication
 		mountPage("analysis", SituationAnalysisPage.class);
 		mountPage("answers", AnswersPage.class);
 		mountPage("matches", MatchManagementPage.class);
+		mountPage("ai-export", AIExportPage.class);
 
 	}
 

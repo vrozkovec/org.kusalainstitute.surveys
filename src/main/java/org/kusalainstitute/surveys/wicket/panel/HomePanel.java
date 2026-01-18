@@ -2,6 +2,7 @@ package org.kusalainstitute.surveys.wicket.panel;
 
 import org.apache.wicket.markup.html.link.BookmarkablePageLink;
 import org.apache.wicket.markup.html.panel.Panel;
+import org.kusalainstitute.surveys.wicket.pages.AIExportPage;
 import org.kusalainstitute.surveys.wicket.pages.AnswersPage;
 import org.kusalainstitute.surveys.wicket.pages.MatchManagementPage;
 import org.kusalainstitute.surveys.wicket.pages.SituationAnalysisPage;
@@ -31,5 +32,6 @@ public class HomePanel extends Panel
 		add(new BookmarkablePageLink<>("situationAnalysisLink", SituationAnalysisPage.class));
 		add(new BookmarkablePageLink<>("answersLink", AnswersPage.class));
 		add(new BookmarkablePageLink<>("matchManagementLink", MatchManagementPage.class));
+		add(new BookmarkablePageLink<>("aiExportLink", AIExportPage.class));
 	}
 }

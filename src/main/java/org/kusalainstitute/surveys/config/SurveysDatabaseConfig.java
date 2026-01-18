@@ -158,6 +158,32 @@ public class SurveysDatabaseConfig implements IDbConfig
 		return Long.parseLong(properties.getProperty("db.pool.connectionTimeout", "30000"));
 	}
 
+	/**
+	 * Gets the data directory path for survey files and persistence.
+	 *
+	 * @return the data directory path
+	 */
+	public String getDataDir()
+	{
+		return properties.getProperty("data.dir", "data");
+	}
+
+	/**
+	 * Gets the manual matches file path. If not explicitly configured, defaults to
+	 * {@code <data.dir>/manual-matches.properties}.
+	 *
+	 * @return the manual matches file path
+	 */
+	public String getManualMatchesFile()
+	{
+		String explicit = properties.getProperty("data.manual-matches.file");
+		if (explicit != null && !explicit.isBlank())
+		{
+			return explicit;
+		}
+		return getDataDir() + "/manual-matches.properties";
+	}
+
 	private Properties loadProperties()
 	{
 		Properties props = new Properties();
