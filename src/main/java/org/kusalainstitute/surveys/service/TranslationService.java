@@ -1,6 +1,7 @@
 package org.kusalainstitute.surveys.service;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
@@ -24,13 +25,25 @@ import com.google.inject.Singleton;
 /**
  * Service for translating survey text fields from French to English using DeepL API. Maintains a
  * file-based cache of translations to avoid redundant API calls.
+ * <p>
+ * The cache is loaded from two sources:
+ * <ol>
+ * <li>Classpath resource {@code /data/translations.properties} (bundled in JAR)</li>
+ * <li>Filesystem file {@code translations.properties} in working directory (for runtime additions)</li>
+ * </ol>
+ * New translations are saved to the filesystem file only.
  */
 @Singleton
 public class TranslationService
 {
 
 	private static final Logger LOG = LoggerFactory.getLogger(TranslationService.class);
-	private static final Path CACHE_FILE = Path.of("data/translations.properties");
+
+	/** Classpath resource for bundled translations (read-only, inside JAR). */
+	private static final String CLASSPATH_CACHE = "/data/translations.properties";
+
+	/** Filesystem file for local development (used when running from IDE). */
+	private static final Path FILESYSTEM_CACHE = Path.of("src/main/resources/data/translations.properties");
 
 	private final IDeepl deepl;
 	private final Properties cache;
@@ -140,52 +153,92 @@ public class TranslationService
 	}
 
 	/**
-	 * Loads the translation cache from the file system.
+	 * Loads the translation cache from both classpath and filesystem. Classpath translations
+	 * (bundled in JAR) are loaded first, then filesystem translations are merged on top.
 	 *
-	 * @return the loaded properties, or empty properties if file doesn't exist
+	 * @return the merged properties from both sources
 	 */
 	private Properties loadCache()
 	{
 		Properties props = new Properties();
 
-		if (Files.exists(CACHE_FILE))
-		{
-			try (Reader reader = Files.newBufferedReader(CACHE_FILE, StandardCharsets.UTF_8))
-			{
-				props.load(reader);
-				LOG.info("Loaded {} translations from cache file: {}", props.size(), CACHE_FILE);
-			}
-			catch (IOException e)
-			{
-				LOG.warn("Failed to load translation cache from {}: {}", CACHE_FILE, e.getMessage());
-			}
-		}
-		else
-		{
-			LOG.info("Translation cache file not found, starting with empty cache: {}", CACHE_FILE);
-		}
+		// 1. Load from classpath (bundled translations)
+		loadFromClasspath(props);
+
+		// 2. Load from filesystem (runtime additions) - these override classpath entries
+		loadFromFilesystem(props);
 
 		return props;
 	}
 
 	/**
-	 * Saves the translation cache to the file system.
+	 * Loads translations from the classpath resource (bundled in JAR).
+	 *
+	 * @param props
+	 *            the properties to load into
 	 */
-	private void saveCache()
+	private void loadFromClasspath(Properties props)
 	{
-		try
+		try (InputStream is = getClass().getResourceAsStream(CLASSPATH_CACHE))
 		{
-			// Ensure parent directory exists
-			Files.createDirectories(CACHE_FILE.getParent());
-
-			try (Writer writer = Files.newBufferedWriter(CACHE_FILE, StandardCharsets.UTF_8))
+			if (is != null)
 			{
-				cache.store(writer, "Translation cache - SHA256 hash -> translated text");
+				props.load(is);
+				LOG.info("Loaded {} translations from classpath: {}", props.size(), CLASSPATH_CACHE);
+			}
+			else
+			{
+				LOG.info("No bundled translations found at classpath: {}", CLASSPATH_CACHE);
 			}
 		}
 		catch (IOException e)
 		{
-			LOG.error("Failed to save translation cache to {}: {}", CACHE_FILE, e.getMessage());
+			LOG.warn("Failed to load translations from classpath {}: {}", CLASSPATH_CACHE, e.getMessage());
+		}
+	}
+
+	/**
+	 * Loads translations from the filesystem cache file (runtime additions).
+	 *
+	 * @param props
+	 *            the properties to load into (existing entries may be overwritten)
+	 */
+	private void loadFromFilesystem(Properties props)
+	{
+		if (Files.exists(FILESYSTEM_CACHE))
+		{
+			try (Reader reader = Files.newBufferedReader(FILESYSTEM_CACHE, StandardCharsets.UTF_8))
+			{
+				int beforeSize = props.size();
+				props.load(reader);
+				int added = props.size() - beforeSize;
+				LOG.info("Loaded {} additional translations from filesystem: {}", added, FILESYSTEM_CACHE);
+			}
+			catch (IOException e)
+			{
+				LOG.warn("Failed to load translation cache from {}: {}", FILESYSTEM_CACHE, e.getMessage());
+			}
+		}
+		else
+		{
+			LOG.debug("No filesystem cache file found at: {}", FILESYSTEM_CACHE.toAbsolutePath());
+		}
+	}
+
+	/**
+	 * Saves the translation cache to the filesystem. Only the filesystem cache is written to, as
+	 * the classpath resource is read-only (inside JAR).
+	 */
+	private void saveCache()
+	{
+		try (Writer writer = Files.newBufferedWriter(FILESYSTEM_CACHE, StandardCharsets.UTF_8))
+		{
+			cache.store(writer, "Translation cache - SHA256 hash -> translated text");
+			LOG.debug("Saved {} translations to filesystem cache: {}", cache.size(), FILESYSTEM_CACHE);
+		}
+		catch (IOException e)
+		{
+			LOG.error("Failed to save translation cache to {}: {}", FILESYSTEM_CACHE, e.getMessage());
 		}
 	}
 

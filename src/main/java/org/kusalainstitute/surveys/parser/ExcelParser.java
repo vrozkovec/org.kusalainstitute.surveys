@@ -1,7 +1,8 @@
 package org.kusalainstitute.surveys.parser;
 
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 
@@ -26,7 +27,8 @@ public abstract class ExcelParser
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 
 	/**
-	 * Opens an Excel workbook from a file path.
+	 * Opens an Excel workbook from a file path. Supports both filesystem paths and JAR resource
+	 * paths via NIO FileSystem.
 	 *
 	 * @param filePath
 	 *            path to the Excel file
@@ -37,7 +39,21 @@ public abstract class ExcelParser
 	protected Workbook openWorkbook(Path filePath) throws IOException
 	{
 		log.info("Opening Excel file: {}", filePath);
-		return new XSSFWorkbook(new FileInputStream(filePath.toFile()));
+		return new XSSFWorkbook(Files.newInputStream(filePath));
+	}
+
+	/**
+	 * Opens an Excel workbook from an input stream.
+	 *
+	 * @param inputStream
+	 *            the input stream to read from
+	 * @return the opened Workbook
+	 * @throws IOException
+	 *             if stream cannot be read
+	 */
+	protected Workbook openWorkbook(InputStream inputStream) throws IOException
+	{
+		return new XSSFWorkbook(inputStream);
 	}
 
 	/**

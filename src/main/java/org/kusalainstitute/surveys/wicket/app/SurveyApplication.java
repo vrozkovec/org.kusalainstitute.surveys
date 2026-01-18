@@ -1,9 +1,13 @@
 package org.kusalainstitute.surveys.wicket.app;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.wicket.Application;
@@ -16,7 +20,6 @@ import org.apache.wicket.settings.ExceptionSettings;
 import org.apache.wicket.util.lang.Bytes;
 import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Jdbi;
-import org.kusalainstitute.surveys.config.SurveysDatabaseConfig;
 import org.kusalainstitute.surveys.config.SurveysModule;
 import org.kusalainstitute.surveys.service.ImportService;
 import org.kusalainstitute.surveys.service.MatchingService;
@@ -135,13 +138,13 @@ public class SurveyApplication extends WebApplication
 	}
 
 	/**
-	 * Drops all database tables and reloads data from Excel files.
+	 * Drops all database tables and reloads data from Excel files on the classpath.
 	 * This method performs the following steps:
 	 * <ol>
 	 * <li>Drop all tables using flyway.clean()</li>
 	 * <li>Run migrations to recreate the schema</li>
-	 * <li>Import pre-survey data from configured data directory</li>
-	 * <li>Import post-survey data from configured data directory</li>
+	 * <li>Import pre-survey data from classpath /data/pre</li>
+	 * <li>Import post-survey data from classpath /data/post</li>
 	 * <li>Run automatic matching</li>
 	 * <li>Restore manual matches from persistence file</li>
 	 * </ol>
@@ -153,11 +156,6 @@ public class SurveyApplication extends WebApplication
 			Flyway flyway = injector.getInstance(Flyway.class);
 			ImportService importService = injector.getInstance(ImportService.class);
 			MatchingService matchingService = injector.getInstance(MatchingService.class);
-			SurveysDatabaseConfig config = injector.getInstance(SurveysDatabaseConfig.class);
-
-			String dataDir = config.getDataDir();
-			Path prePath = Paths.get(dataDir, "pre");
-			Path postPath = Paths.get(dataDir, "post");
 
 			// Step 1: Drop all tables
 			LOG.info("=== Step 1: Dropping all database tables ===");
@@ -169,10 +167,10 @@ public class SurveyApplication extends WebApplication
 			flyway.migrate();
 			LOG.info("Database migrations completed successfully.");
 
-			// Step 3: Import pre-survey data
-			LOG.info("=== Step 3: Importing surveys ===");
-			int preCount = importDirectory(importService, prePath, true);
-			int postCount = importDirectory(importService, postPath, false);
+			// Step 3: Import surveys from classpath
+			LOG.info("=== Step 3: Importing surveys from classpath ===");
+			int preCount = importFromClasspath(importService, "/data/pre", true);
+			int postCount = importFromClasspath(importService, "/data/post", false);
 			LOG.info("Imported {} pre-survey and {} post-survey records.", preCount, postCount);
 
 			// Step 4: Run automatic matching
@@ -197,7 +195,71 @@ public class SurveyApplication extends WebApplication
 	}
 
 	/**
-	 * Imports all Excel files from a directory.
+	 * Imports all Excel files from a classpath resource directory. Works with both filesystem paths
+	 * (when running from IDE) and JAR paths (when deployed).
+	 *
+	 * @param importService
+	 *            the import service to use
+	 * @param resourcePath
+	 *            the classpath resource path (e.g., "/data/pre")
+	 * @param isPreSurvey
+	 *            true for pre-survey, false for post-survey
+	 * @return number of imported records
+	 * @throws IOException
+	 *             if import fails
+	 * @throws URISyntaxException
+	 *             if resource URI is invalid
+	 */
+	private int importFromClasspath(ImportService importService, String resourcePath, boolean isPreSurvey)
+		throws IOException, URISyntaxException
+	{
+		String type = isPreSurvey ? "pre-survey" : "post-survey";
+
+		URI resourceUri = getClass().getResource(resourcePath).toURI();
+
+		if ("jar".equals(resourceUri.getScheme()))
+		{
+			// Running from JAR - need to create a FileSystem
+			return importFromJar(importService, resourceUri, resourcePath, isPreSurvey, type);
+		}
+		else
+		{
+			// Running from filesystem (IDE)
+			Path dir = Path.of(resourceUri);
+			return importDirectory(importService, dir, isPreSurvey, type);
+		}
+	}
+
+	/**
+	 * Imports Excel files from a JAR resource.
+	 *
+	 * @param importService
+	 *            the import service to use
+	 * @param jarUri
+	 *            the JAR URI
+	 * @param resourcePath
+	 *            the resource path within the JAR
+	 * @param isPreSurvey
+	 *            true for pre-survey, false for post-survey
+	 * @param type
+	 *            the survey type label for logging
+	 * @return number of imported records
+	 * @throws IOException
+	 *             if import fails
+	 */
+	private int importFromJar(ImportService importService, URI jarUri, String resourcePath, boolean isPreSurvey,
+		String type) throws IOException
+	{
+		// For JAR URIs, we need to create a FileSystem if one doesn't exist
+		try (FileSystem fs = FileSystems.newFileSystem(jarUri, Collections.emptyMap()))
+		{
+			Path dir = fs.getPath(resourcePath);
+			return importDirectory(importService, dir, isPreSurvey, type);
+		}
+	}
+
+	/**
+	 * Imports all Excel files from a directory path (works for both filesystem and JAR paths).
 	 *
 	 * @param importService
 	 *            the import service to use
@@ -205,21 +267,22 @@ public class SurveyApplication extends WebApplication
 	 *            the directory path
 	 * @param isPreSurvey
 	 *            true for pre-survey, false for post-survey
+	 * @param type
+	 *            the survey type label for logging
 	 * @return number of imported records
 	 * @throws IOException
 	 *             if import fails
 	 */
-	private int importDirectory(ImportService importService, Path dir, boolean isPreSurvey) throws IOException
+	private int importDirectory(ImportService importService, Path dir, boolean isPreSurvey, String type)
+		throws IOException
 	{
-		String type = isPreSurvey ? "pre-survey" : "post-survey";
-
 		if (!Files.exists(dir))
 		{
 			LOG.warn("Directory not found: {}, skipping {} import.", dir, type);
 			return 0;
 		}
 
-		LOG.info("Importing {} data from directory: {}", type, dir);
+		LOG.info("Importing {} data from: {}", type, dir);
 
 		List<Path> excelFiles;
 		try (var stream = Files.list(dir))
