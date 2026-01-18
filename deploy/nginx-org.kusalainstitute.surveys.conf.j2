@@ -15,22 +15,6 @@ server {
 {% if sslCertificatePresent %}
 
 server {
-
-        server_name jidelnicek.apertostudent.cz jidelnilistek.apertostudent.cz;
-
-        charset utf-8;
-        
-        ssl_certificate         /srv/webutils/letsencrypt/certs/jidelnicek.apertostudent.cz/fullchain.pem;
-        ssl_certificate_key     /srv/webutils/letsencrypt/certs/jidelnicek.apertostudent.cz/privkey.pem;
-        ssl_trusted_certificate /srv/webutils/letsencrypt/certs/jidelnicek.apertostudent.cz/fullchain.pem;
-        include /srv/webutils/nginx-conf/ssl.conf;
-        
-        location / {
-    		return 302 https://{{ branchVars.domains.main }}$request_uri;
-        }        
-}
-
-server {
         server_name {{ branchVars.domains.main }};
 
         charset utf-8;
@@ -42,7 +26,6 @@ server {
         ssl_trusted_certificate /srv/webutils/letsencrypt/certs/{{ branchVars.domains.ssl }}/fullchain.pem;
         include /srv/webutils/nginx-conf/ssl.conf;
 
-
         #Problems with REST API when using Nginx as reverse proxy
         #http://www.gooddevs.com/rest-api-nginx-proxy-problem/
         underscores_in_headers on;
@@ -53,68 +36,22 @@ server {
 		}
 
 
-        # Serve static HTML for root path
-        location = / {
-            root /data/webapps/www/{{ branchVars.filesFolder }};
-            try_files /jidelnicek-full.html =404;
-
-            # Cache control for static content
-            add_header Cache-Control "public, max-age=300" always;
-        }
-
-        # Serve other static foodlist files (historical foodlists, images)
-        location ~ ^/(jidelnicek.*\.(html|png|jpg))$ {
-            root /data/webapps/www/{{ branchVars.filesFolder }};
-            try_files /$1 =404;
-
-            # Cache control for static content
-            add_header Cache-Control "public, max-age=3600" always;
-        }
-
-        # Proxy to Java app for /nahrat and other app paths
-        location /nahrat {
+        location / {
 		    include /srv/webutils/nginx-conf/proxy.conf;
-
+		    
+           	auth_basic "Restricted Access";
+   			auth_basic_user_file /data/private/nginx/.htpasswd-kusala-surveys;		    
+		    
 		    client_max_body_size 108M;
-
+		    
 		    proxy_cookie_path / /;
-
-		    proxy_pass http://127.0.0.1:{{ currentPort }}/nahrat;
+		    
+		    proxy_pass http://127.0.0.1:{{ currentPort }}/;
 
 		    proxy_connect_timeout      1200;
 		    proxy_send_timeout         1200;
 		    proxy_read_timeout         1200;
 		    send_timeout               1200;
-
-		    # Disable caching for dynamic content
-		    proxy_no_cache 1;
-		    proxy_cache_bypass 1;
-		    add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" always;
-		    add_header Pragma "no-cache" always;
-		    add_header Expires "0" always;
-        }
-
-        # Proxy all other app paths to Java app
-        location ~ ^/(wicket|resources|api|login|logout)/ {
-		    include /srv/webutils/nginx-conf/proxy.conf;
-
-		    client_max_body_size 108M;
-
-		    proxy_cookie_path / /;
-
-		    proxy_pass http://127.0.0.1:{{ currentPort }}$request_uri;
-
-		    proxy_connect_timeout      1200;
-		    proxy_send_timeout         1200;
-		    proxy_read_timeout         1200;
-		    send_timeout               1200;
-
-		    # Disable caching for dynamic content
-		    proxy_no_cache 1;
-		    proxy_cache_bypass 1;
-		    add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" always;
-		    add_header Pragma "no-cache" always;
-		    add_header Expires "0" always;
         }
 
 }
