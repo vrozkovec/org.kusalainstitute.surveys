@@ -122,6 +122,7 @@ public class SurveysModule extends AbstractModule
 	@Singleton
 	public Flyway provideFlyway(HikariDataSource dataSource)
 	{
-		return Flyway.configure().dataSource(dataSource).locations("classpath:db/migration").baselineOnMigrate(true).load();
+		return Flyway.configure().dataSource(dataSource).locations("classpath:db/migration").cleanDisabled(false)
+			.baselineOnMigrate(true).load();
 	}
 }
