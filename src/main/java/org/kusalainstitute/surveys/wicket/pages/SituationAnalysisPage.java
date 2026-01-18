@@ -68,17 +68,8 @@ public class SituationAnalysisPage extends BasePage
 		return new SituationAnalysisPanel(id, new LoadableDetachableModel<>()
 		{
 			@Override
-			public void detach()
-			{
-				super.detach();
-				System.out
-					.println("SituationAnalysisPage.newContentPanel(...).new LoadableDetachableModel() {...}.detach()");
-			}
-
-			@Override
 			protected SituationAnalysisModel load()
 			{
-				System.out.println("SituationAnalysisPage.newContentPanel(...).new LoadableDetachableModel() {...}.load()");
 				return loadAnalysisModel();
 			}
 		}, availableCohortsModel, selectedCohortsModel);
@@ -105,8 +96,6 @@ public class SituationAnalysisPage extends BasePage
 				? List.of()
 				: matchDao.findByPostPersonCohorts(selectedCohorts);
 			List<MatchedPairData> pairs = new ArrayList<>();
-
-			System.err.println(selectedCohorts);
 
 			for (PersonMatch match : matches)
 			{
