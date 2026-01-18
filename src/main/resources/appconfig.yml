@@ -1,7 +1,7 @@
 app:
    identifier: surveys-kusalainstitute-org
    # base url to the application
-   baseUrl: https://surveys.kusalainstitute.org/  
+   baseUrl: https://surveys.kusalainstitute.eu/  
    emailFrom:
       # default sender address if no address is set
       address: noreply@surveys.kusalainstitute.org 

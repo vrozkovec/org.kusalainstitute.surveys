@@ -3,7 +3,7 @@
 # so for example redis.port becomes branchVars.redis.port
 
 redis:     
-   port: 6379
+   port: 6555
    skipConfigCreation: true
 
 lan:
@@ -16,12 +16,12 @@ java:
    executable: /usr/lib/jvm/temurin-17-jdk-amd64/bin/java
    
 domains:   
-   main: jidelnicek.aperto.cz
-   ssl: jidelnicek.aperto.cz
-   files: files.jidelnicek.aperto.cz
-   imagesProxy: images.jidelnicek.aperto.cz
+   main: surveys.kusalainstitute.eu
+   ssl: surveys.kusalainstitute.eu
+   files: files.surveys.kusalainstitute.eu
+   imagesProxy: images.surveys.kusalainstitute.eu
    
 filesFolder: cz.aperto.jidelnicek
 
 nginx:
-   cacheIdentifier: ApertoFoodlistCache
+   cacheIdentifier: KusalaInstituteSurveysCache
