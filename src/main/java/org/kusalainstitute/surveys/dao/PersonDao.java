@@ -113,6 +113,16 @@ public interface PersonDao
 	List<String> findAllCohorts();
 
 	/**
+	 * Gets all distinct cohort codes from POST survey persons only. PRE survey cohorts contain
+	 * incorrect "all?" values due to initial survey collection mistake, so we use POST person's
+	 * cohort which has correct values.
+	 *
+	 * @return list of cohort codes from POST survey persons
+	 */
+	@SqlQuery("SELECT DISTINCT cohort FROM person WHERE survey_type = 'POST' ORDER BY cohort")
+	List<String> findAllPostCohorts();
+
+	/**
 	 * Finds a person by composite key (cohort, email, name, and survey type) joined with survey
 	 * response timestamp. This is used to restore manual matches after database rebuilds.
 	 *

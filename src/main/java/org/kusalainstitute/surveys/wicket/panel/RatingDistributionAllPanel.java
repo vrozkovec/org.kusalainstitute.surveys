@@ -39,11 +39,10 @@ public class RatingDistributionAllPanel extends GenericPanel<SituationAnalysisMo
 	{
 		super.onInitialize();
 
-		SituationAnalysisModel data = getModelObject();
-		List<RatingDistribution> allDistributions = data.getAllRatingDistributions();
+		var dataModel = getModel();
 
-		// Outer ListView for each situation (12 charts)
-		add(new ListView<>("situationCharts", allDistributions)
+		// Outer ListView for each situation (12 charts) - using dynamic model
+		add(new ListView<>("situationCharts", dataModel.map(SituationAnalysisModel::getAllRatingDistributions))
 		{
 			@Override
 			protected void populateItem(ListItem<RatingDistribution> chartItem)

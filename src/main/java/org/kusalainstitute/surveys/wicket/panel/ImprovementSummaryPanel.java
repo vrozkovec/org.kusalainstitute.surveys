@@ -9,7 +9,6 @@ import org.apache.wicket.markup.html.panel.GenericPanel;
 import org.apache.wicket.model.IModel;
 import org.kusalainstitute.surveys.wicket.model.SituationAnalysisModel;
 import org.kusalainstitute.surveys.wicket.model.SituationAnalysisModel.CategoryCount;
-import org.kusalainstitute.surveys.wicket.model.SituationAnalysisModel.ImprovementSummary;
 
 /**
  * Panel displaying improvement summary statistics. Shows overview metrics (total students, improved,
@@ -36,21 +35,22 @@ public class ImprovementSummaryPanel extends GenericPanel<SituationAnalysisModel
 	{
 		super.onInitialize();
 
-		SituationAnalysisModel data = getModelObject();
-		ImprovementSummary summary = data.getImprovementSummary();
+		var dataModel = getModel();
+		var summaryModel = dataModel.map(SituationAnalysisModel::getImprovementSummary);
 
-		// Summary statistics
-		add(new Label("totalStudents", String.valueOf(summary.totalStudents())));
-		add(new Label("improvedCount", String.valueOf(summary.improvedCount())));
-		add(new Label("improvedPercent", summary.improvedPercent() + "%"));
-		add(new Label("sameCount", String.valueOf(summary.sameCount())));
-		add(new Label("samePercent", summary.samePercent() + "%"));
-		add(new Label("worseCount", String.valueOf(summary.worseCount())));
-		add(new Label("worsePercent", summary.worsePercent() + "%"));
-		add(new Label("averageImprovement", SituationAnalysisModel.formatAverage(summary.averageImprovement())));
+		// Summary statistics - all using dynamic models
+		add(new Label("totalStudents", summaryModel.map(s -> String.valueOf(s.totalStudents()))));
+		add(new Label("improvedCount", summaryModel.map(s -> String.valueOf(s.improvedCount()))));
+		add(new Label("improvedPercent", summaryModel.map(s -> s.improvedPercent() + "%")));
+		add(new Label("sameCount", summaryModel.map(s -> String.valueOf(s.sameCount()))));
+		add(new Label("samePercent", summaryModel.map(s -> s.samePercent() + "%")));
+		add(new Label("worseCount", summaryModel.map(s -> String.valueOf(s.worseCount()))));
+		add(new Label("worsePercent", summaryModel.map(s -> s.worsePercent() + "%")));
+		add(new Label("averageImprovement",
+			summaryModel.map(s -> SituationAnalysisModel.formatAverage(s.averageImprovement()))));
 
-		// Category breakdown
-		add(new ListView<>("categoryRows", data.getImprovementCategories())
+		// Category breakdown - using dynamic model
+		add(new ListView<>("categoryRows", dataModel.map(SituationAnalysisModel::getImprovementCategories))
 		{
 			@Override
 			protected void populateItem(ListItem<CategoryCount> item)

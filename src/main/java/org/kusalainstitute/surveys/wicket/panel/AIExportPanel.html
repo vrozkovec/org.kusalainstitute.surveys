@@ -6,9 +6,23 @@
 		<h1 class="mb-4">AI Export - Survey Data</h1>
 		<p class="lead mb-4">Data formatted as plain text for easy copy-paste into AI systems for further analysis.</p>
 
-		<div wicket:id="improvementSummary"></div>
-		<div wicket:id="ratingDistribution"></div>
-		<div wicket:id="enumDistribution"></div>
+		<!-- Cohort Filter -->
+		<form wicket:id="filterForm" class="mb-4">
+			<div class="row align-items-center">
+				<div class="col-auto">
+					<label class="form-label fw-bold mb-0">Filter by Cohort:</label>
+				</div>
+				<div class="col-md-4">
+					<select wicket:id="cohortFilter"></select>
+				</div>
+			</div>
+		</form>
+
+		<div wicket:id="contentContainer">
+			<div wicket:id="improvementSummary"></div>
+			<div wicket:id="ratingDistribution"></div>
+			<div wicket:id="enumDistribution"></div>
+		</div>
 	</div>
 </wicket:panel>
 </body>

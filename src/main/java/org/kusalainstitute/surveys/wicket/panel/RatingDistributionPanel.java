@@ -4,8 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.wicket.AttributeModifier;
-import org.apache.wicket.ajax.AjaxRequestTarget;
-import org.apache.wicket.ajax.form.AjaxFormComponentUpdatingBehavior;
+import org.apache.wicket.ajax.form.OnChangeAjaxBehavior;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
 import org.apache.wicket.markup.html.form.DropDownChoice;
@@ -20,8 +19,8 @@ import org.kusalainstitute.surveys.wicket.model.SituationAnalysisModel.RatingDis
 
 /**
  * Panel displaying rating distribution before and after for speaking situations. Shows horizontal
- * bar chart with PRE (gray) and POST (green) bars for each rating level (1-5). Includes dropdown
- * to select specific situation or view all combined.
+ * bar chart with PRE (gray) and POST (green) bars for each rating level (1-5). Includes dropdown to
+ * select specific situation or view all combined.
  */
 public class RatingDistributionPanel extends GenericPanel<SituationAnalysisModel>
 {
@@ -55,14 +54,10 @@ public class RatingDistributionPanel extends GenericPanel<SituationAnalysisModel
 		// Dropdown for situation selection
 		DropDownChoice<String> situationChoice = new DropDownChoice<>("situationSelect",
 			new PropertyModel<>(this, "selectedSituation"), choices);
-		situationChoice.add(new AjaxFormComponentUpdatingBehavior("change")
-		{
-			@Override
-			protected void onUpdate(AjaxRequestTarget target)
-			{
-				target.add(distributionContainer);
-			}
-		});
+		situationChoice.add(OnChangeAjaxBehavior.onChange(t -> {
+			getModel().detach();
+			t.add(distributionContainer);
+		}));
 		add(situationChoice);
 
 		// Container for the distribution display (refreshed on selection change)

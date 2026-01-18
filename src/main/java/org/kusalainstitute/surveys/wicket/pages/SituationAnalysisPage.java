@@ -5,7 +5,9 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.wicket.Component;
+import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.LoadableDetachableModel;
+import org.apache.wicket.model.util.ListModel;
 import org.jdbi.v3.core.Jdbi;
 import org.kusalainstitute.surveys.dao.MatchDao;
 import org.kusalainstitute.surveys.dao.PersonDao;
@@ -29,6 +31,12 @@ import de.agilecoders.wicket.core.util.CssClassNames;
 public class SituationAnalysisPage extends BasePage
 {
 
+	/** Available cohorts from POST survey persons (correct data). */
+	private IModel<List<String>> availableCohortsModel;
+
+	/** Currently selected cohorts for filtering. */
+	private IModel<List<String>> selectedCohortsModel;
+
 	/**
 	 * Creates a new SituationAnalysisPage.
 	 */
@@ -38,26 +46,53 @@ public class SituationAnalysisPage extends BasePage
 	}
 
 	@Override
+	protected void onInitialize()
+	{
+		// Load available cohorts from POST persons only (correct cohort data)
+		Jdbi jdbi = SurveyApplication.get().getJdbi();
+		List<String> availableCohorts = jdbi.withHandle(handle -> {
+			PersonDao personDao = handle.attach(PersonDao.class);
+			return personDao.findAllPostCohorts();
+		});
+
+		// Initialize models - all cohorts selected by default
+		availableCohortsModel = new ListModel<>(availableCohorts);
+		selectedCohortsModel = new ListModel<>(new ArrayList<>(availableCohorts));
+
+		super.onInitialize();
+	}
+
+	@Override
 	protected Component newContentPanel(String id)
 	{
 		return new SituationAnalysisPanel(id, new LoadableDetachableModel<>()
 		{
 			@Override
+			public void detach()
+			{
+				super.detach();
+				System.out
+					.println("SituationAnalysisPage.newContentPanel(...).new LoadableDetachableModel() {...}.detach()");
+			}
+
+			@Override
 			protected SituationAnalysisModel load()
 			{
+				System.out.println("SituationAnalysisPage.newContentPanel(...).new LoadableDetachableModel() {...}.load()");
 				return loadAnalysisModel();
 			}
-		});
+		}, availableCohortsModel, selectedCohortsModel);
 	}
 
 	/**
-	 * Loads the analysis model from the database.
+	 * Loads the analysis model from the database, filtered by selected cohorts.
 	 *
 	 * @return populated SituationAnalysisModel
 	 */
 	private SituationAnalysisModel loadAnalysisModel()
 	{
 		Jdbi jdbi = SurveyApplication.get().getJdbi();
+		List<String> selectedCohorts = selectedCohortsModel.getObject();
 
 		return jdbi.withHandle(handle -> {
 			MatchDao matchDao = handle.attach(MatchDao.class);
@@ -65,8 +100,13 @@ public class SituationAnalysisPage extends BasePage
 			PreSurveyDao preSurveyDao = handle.attach(PreSurveyDao.class);
 			PostSurveyDao postSurveyDao = handle.attach(PostSurveyDao.class);
 
-			List<PersonMatch> matches = matchDao.findAll();
+			// Filter matches by POST person's cohort (correct cohort data)
+			List<PersonMatch> matches = selectedCohorts.isEmpty()
+				? List.of()
+				: matchDao.findByPostPersonCohorts(selectedCohorts);
 			List<MatchedPairData> pairs = new ArrayList<>();
+
+			System.err.println(selectedCohorts);
 
 			for (PersonMatch match : matches)
 			{

@@ -41,17 +41,19 @@ public class RatingDistributionAllTextPanel extends GenericPanel<SituationAnalys
 	{
 		super.onInitialize();
 
-		add(new Label("distributionText", this::buildDistributionText).setEscapeModelStrings(false));
+		// Use model-based label for proper AJAX refresh
+		add(new Label("distributionText", getModel().map(this::buildDistributionText)).setEscapeModelStrings(false));
 	}
 
 	/**
 	 * Builds the AI-friendly text representation of rating distributions.
 	 *
+	 * @param model
+	 *            the analysis model
 	 * @return formatted text with rating distributions
 	 */
-	private String buildDistributionText()
+	private String buildDistributionText(SituationAnalysisModel model)
 	{
-		SituationAnalysisModel model = getModelObject();
 		if (model == null)
 		{
 			return "No data available.";

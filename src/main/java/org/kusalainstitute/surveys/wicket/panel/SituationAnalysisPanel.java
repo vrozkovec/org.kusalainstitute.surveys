@@ -1,13 +1,15 @@
 package org.kusalainstitute.surveys.wicket.panel;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import org.apache.wicket.AttributeModifier;
+import org.apache.wicket.ajax.form.OnChangeAjaxBehavior;
 import org.apache.wicket.markup.html.WebMarkupContainer;
 import org.apache.wicket.markup.html.basic.Label;
+import org.apache.wicket.markup.html.form.Form;
 import org.apache.wicket.markup.html.list.ListItem;
 import org.apache.wicket.markup.html.list.ListView;
-import org.apache.wicket.markup.html.panel.GenericPanel;
 import org.apache.wicket.markup.repeater.RepeatingView;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.Model;
@@ -19,6 +21,11 @@ import org.kusalainstitute.surveys.wicket.model.SituationData;
 import org.kusalainstitute.surveys.wicket.model.StudentRow;
 import org.kusalainstitute.surveys.wicket.model.TextAnswerData;
 
+import cz.newforms.wicket.markup.html.basic.container.AjaxContainer;
+import cz.newforms.wicket.markup.html.panel.AjaxGenericPanel;
+
+import name.berries.wicket.bootstrap.form.BootstrapMultiSelect;
+
 import de.agilecoders.wicket.core.markup.html.bootstrap.components.TooltipBehavior;
 import de.agilecoders.wicket.core.markup.html.bootstrap.components.TooltipConfig;
 
@@ -27,8 +34,17 @@ import de.agilecoders.wicket.core.markup.html.bootstrap.components.TooltipConfig
  * Speaking: pre/post comparison with progress bars and delta - Understanding: pre Q9 values only
  * (single bar) - Ease: post Q7 inverted values only (single bar)
  */
-public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
+public class SituationAnalysisPanel extends AjaxGenericPanel<SituationAnalysisModel>
 {
+
+	/** Model containing available cohorts for filtering. */
+	private final IModel<List<String>> availableCohortsModel;
+
+	/** Model containing selected cohorts for filtering. */
+	private final IModel<List<String>> selectedCohortsModel;
+
+	/** Container for AJAX refresh of panel content. */
+	private AjaxContainer contentContainer;
 
 	/**
 	 * Creates a new SituationAnalysisPanel.
@@ -37,10 +53,17 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 	 *            the wicket component id
 	 * @param model
 	 *            the model containing the analysis data
+	 * @param availableCohortsModel
+	 *            model containing available cohorts for filtering
+	 * @param selectedCohortsModel
+	 *            model containing selected cohorts for filtering
 	 */
-	public SituationAnalysisPanel(String id, IModel<SituationAnalysisModel> model)
+	public SituationAnalysisPanel(String id, IModel<SituationAnalysisModel> model,
+		IModel<List<String>> availableCohortsModel, IModel<List<String>> selectedCohortsModel)
 	{
 		super(id, model);
+		this.availableCohortsModel = availableCohortsModel;
+		this.selectedCohortsModel = selectedCohortsModel;
 	}
 
 	@Override
@@ -48,11 +71,25 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 	{
 		super.onInitialize();
 
-		add(new ImprovementSummaryPanel("improvementSummary", getModel()));
-		add(new RatingDistributionAllPanel("ratingDistribution", getModel()));
-		add(new EnumDistributionSummaryPanel("enumDistribution", getModel()));
+		// Add cohort filter form
+		Form<Void> filterForm = new Form<>("filterForm");
+		add(filterForm);
 
-		SituationAnalysisModel data = getModelObject();
+		BootstrapMultiSelect<String> cohortSelect = new BootstrapMultiSelect<>("cohortFilter", selectedCohortsModel,
+			availableCohortsModel);
+		cohortSelect.add(OnChangeAjaxBehavior.onChange(t -> {
+			getModel().detach();
+			t.add(contentContainer);
+		}));
+		filterForm.add(cohortSelect);
+
+		// Content container for AJAX refresh
+		contentContainer = new AjaxContainer("contentContainer");
+		add(contentContainer);
+
+		contentContainer.add(new ImprovementSummaryPanel("improvementSummary", getModel()));
+		contentContainer.add(new RatingDistributionAllPanel("ratingDistribution", getModel()));
+		contentContainer.add(new EnumDistributionSummaryPanel("enumDistribution", getModel()));
 
 		// Tooltip configuration for headers
 		TooltipConfig tooltipConfig = new TooltipConfig().withPlacement(TooltipConfig.Placement.bottom).withHtml(true);
@@ -62,64 +99,69 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 		speakingGroupHeader
 			.add(new TooltipBehavior(Model.of("Pre (Q7): " + SituationAnalysisModel.Q7_PRE_TEXT.replace(": ", "")
 				+ "<br/>Post (Q6): " + SituationAnalysisModel.Q6_POST_TEXT.replace(": ", "")), tooltipConfig));
-		add(speakingGroupHeader);
+		contentContainer.add(speakingGroupHeader);
 
 		WebMarkupContainer understandingGroupHeader = new WebMarkupContainer("understandingGroupHeader");
 		understandingGroupHeader.add(
 			new TooltipBehavior(Model.of("Q9: " + SituationAnalysisModel.Q9_PRE_TEXT.replace(": ", "")), tooltipConfig));
-		add(understandingGroupHeader);
+		contentContainer.add(understandingGroupHeader);
 
 		WebMarkupContainer easeGroupHeader = new WebMarkupContainer("easeGroupHeader");
 		easeGroupHeader
 			.add(new TooltipBehavior(Model.of("Q7 (Post): " + SituationAnalysisModel.Q7_POST_TEXT.replace(": ", "")
 				+ "<br/>(Values inverted: higher = easier)"), tooltipConfig));
-		add(easeGroupHeader);
+		contentContainer.add(easeGroupHeader);
 
 		WebMarkupContainer textPreGroupHeader = new WebMarkupContainer("textPreGroupHeader");
 		textPreGroupHeader.add(new TooltipBehavior(Model.of("Free-text responses from the pre-survey"), tooltipConfig));
-		add(textPreGroupHeader);
+		contentContainer.add(textPreGroupHeader);
 
 		WebMarkupContainer textPostGroupHeader = new WebMarkupContainer("textPostGroupHeader");
 		textPostGroupHeader.add(new TooltipBehavior(Model.of("Free-text responses from the post-survey"), tooltipConfig));
-		add(textPostGroupHeader);
+		contentContainer.add(textPostGroupHeader);
 
 		// Enum group headers
 		WebMarkupContainer enumPreGroupHeader = new WebMarkupContainer("enumPreGroupHeader");
-		enumPreGroupHeader.add(new TooltipBehavior(Model.of("Pre-survey demographics and background (Q1-Q4)"), tooltipConfig));
-		add(enumPreGroupHeader);
+		enumPreGroupHeader
+			.add(new TooltipBehavior(Model.of("Pre-survey demographics and background (Q1-Q4)"), tooltipConfig));
+		contentContainer.add(enumPreGroupHeader);
 
 		WebMarkupContainer enumPostGroupHeader = new WebMarkupContainer("enumPostGroupHeader");
 		enumPostGroupHeader.add(new TooltipBehavior(Model.of("Post-survey app usage and progress (Q1-Q4)"), tooltipConfig));
-		add(enumPostGroupHeader);
+		contentContainer.add(enumPostGroupHeader);
+
+		var dataModel = getModel();
 
 		// Situation name headers - Speaking group
-		add(new ListView<>("speakingHeaders", data.getSpeakingHeaderInfos())
-		{
-			@Override
-			protected void populateItem(ListItem<HeaderInfo> item)
+		contentContainer
+			.add(new ListView<>("speakingHeaders", dataModel.map(SituationAnalysisModel::getSpeakingHeaderInfos))
 			{
-				HeaderInfo info = item.getModelObject();
-				item.add(new Label("situationName", info.label()));
-				item.add(new Label("questionNumber", info.questionNumber()));
-				item.add(new TooltipBehavior(Model.of(info.tooltip().replace("\n", "<br/>")), tooltipConfig));
-			}
-		});
+				@Override
+				protected void populateItem(ListItem<HeaderInfo> item)
+				{
+					HeaderInfo info = item.getModelObject();
+					item.add(new Label("situationName", info.label()));
+					item.add(new Label("questionNumber", info.questionNumber()));
+					item.add(new TooltipBehavior(Model.of(info.tooltip().replace("\n", "<br/>")), tooltipConfig));
+				}
+			});
 
 		// Situation name headers - Understanding group
-		add(new ListView<>("understandingHeaders", data.getUnderstandingHeaderInfos())
-		{
-			@Override
-			protected void populateItem(ListItem<HeaderInfo> item)
+		contentContainer
+			.add(new ListView<>("understandingHeaders", dataModel.map(SituationAnalysisModel::getUnderstandingHeaderInfos))
 			{
-				HeaderInfo info = item.getModelObject();
-				item.add(new Label("situationName", info.label()));
-				item.add(new Label("questionNumber", info.questionNumber()));
-				item.add(new TooltipBehavior(Model.of(info.tooltip().replace("\n", "<br/>")), tooltipConfig));
-			}
-		});
+				@Override
+				protected void populateItem(ListItem<HeaderInfo> item)
+				{
+					HeaderInfo info = item.getModelObject();
+					item.add(new Label("situationName", info.label()));
+					item.add(new Label("questionNumber", info.questionNumber()));
+					item.add(new TooltipBehavior(Model.of(info.tooltip().replace("\n", "<br/>")), tooltipConfig));
+				}
+			});
 
 		// Situation name headers - Ease group
-		add(new ListView<>("easeHeaders", data.getEaseHeaderInfos())
+		contentContainer.add(new ListView<>("easeHeaders", dataModel.map(SituationAnalysisModel::getEaseHeaderInfos))
 		{
 			@Override
 			protected void populateItem(ListItem<HeaderInfo> item)
@@ -132,7 +174,7 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 		});
 
 		// Text answer column headers with tooltips
-		add(new ListView<>("textHeaders", data.getTextHeaderInfos())
+		contentContainer.add(new ListView<>("textHeaders", dataModel.map(SituationAnalysisModel::getTextHeaderInfos))
 		{
 			@Override
 			protected void populateItem(ListItem<HeaderInfo> item)
@@ -147,7 +189,7 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 		});
 
 		// Enum answer column headers with tooltips
-		add(new ListView<>("enumHeaders", data.getEnumHeaderInfos())
+		contentContainer.add(new ListView<>("enumHeaders", dataModel.map(SituationAnalysisModel::getEnumHeaderInfos))
 		{
 			@Override
 			protected void populateItem(ListItem<HeaderInfo> item)
@@ -163,7 +205,7 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 		});
 
 		// Student data rows
-		add(new ListView<>("studentRows", data.getRows())
+		contentContainer.add(new ListView<>("studentRows", dataModel.map(SituationAnalysisModel::getRows))
 		{
 			@Override
 			protected void populateItem(ListItem<StudentRow> item)
@@ -235,7 +277,7 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 		});
 
 		// Footer averages - Speaking (deltas with sign)
-		add(new ListView<>("speakingAverages", data.getSpeakingAverages())
+		contentContainer.add(new ListView<>("speakingAverages", dataModel.map(SituationAnalysisModel::getSpeakingAverages))
 		{
 			@Override
 			protected void populateItem(ListItem<BigDecimal> item)
@@ -248,19 +290,20 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 		});
 
 		// Footer averages - Understanding (values without sign)
-		add(new ListView<>("understandingAverages", data.getUnderstandingAverages())
-		{
-			@Override
-			protected void populateItem(ListItem<BigDecimal> item)
+		contentContainer
+			.add(new ListView<>("understandingAverages", dataModel.map(SituationAnalysisModel::getUnderstandingAverages))
 			{
-				BigDecimal avg = item.getModelObject();
-				Label label = new Label("avgValue", SituationAnalysisModel.formatValue(avg));
-				item.add(label);
-			}
-		});
+				@Override
+				protected void populateItem(ListItem<BigDecimal> item)
+				{
+					BigDecimal avg = item.getModelObject();
+					Label label = new Label("avgValue", SituationAnalysisModel.formatValue(avg));
+					item.add(label);
+				}
+			});
 
 		// Footer averages - Ease (values without sign)
-		add(new ListView<>("easeAverages", data.getEaseAverages())
+		contentContainer.add(new ListView<>("easeAverages", dataModel.map(SituationAnalysisModel::getEaseAverages))
 		{
 			@Override
 			protected void populateItem(ListItem<BigDecimal> item)
@@ -271,11 +314,19 @@ public class SituationAnalysisPanel extends GenericPanel<SituationAnalysisModel>
 			}
 		});
 
-		// Total change label (speaking only)
-		BigDecimal totalSpeaking = data.getTotalSpeakingChange();
-		Label totalSpeakingLabel = new Label("totalSpeakingChange", SituationAnalysisModel.formatAverage(totalSpeaking));
-		totalSpeakingLabel.add(AttributeModifier.append("class", SituationAnalysisModel.getAverageCssClass(totalSpeaking)));
-		add(totalSpeakingLabel);
+		// Total change label (speaking only) - uses dynamic model
+		contentContainer.add(new Label("totalSpeakingChange",
+			dataModel.map(d -> SituationAnalysisModel.formatAverage(d.getTotalSpeakingChange())))
+		{
+			@Override
+			protected void onConfigure()
+			{
+				super.onConfigure();
+				BigDecimal totalSpeaking = dataModel.getObject().getTotalSpeakingChange();
+				add(AttributeModifier.replace("class",
+					"total-summary-value " + SituationAnalysisModel.getAverageCssClass(totalSpeaking)));
+			}
+		});
 	}
 
 	private static final int MAX_BRICKS = 5;

@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
+import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -69,6 +70,23 @@ public interface MatchDao
 	 */
 	@SqlQuery("SELECT * FROM person_match ORDER BY cohort, matched_at")
 	List<PersonMatch> findAll();
+
+	/**
+	 * Finds matches filtered by POST person's cohort. PRE survey cohorts contain incorrect "all?"
+	 * values due to initial survey collection mistake, so we filter by POST person's cohort which
+	 * has correct values.
+	 *
+	 * @param cohorts
+	 *            the list of cohorts to filter by
+	 * @return list of matches where the POST person belongs to one of the specified cohorts
+	 */
+	@SqlQuery("""
+		SELECT pm.* FROM person_match pm
+		JOIN person post ON pm.post_person_id = post.id
+		WHERE post.cohort IN (<cohorts>)
+		ORDER BY post.cohort, pm.matched_at
+		""")
+	List<PersonMatch> findByPostPersonCohorts(@BindList("cohorts") List<String> cohorts);
 
 	/**
 	 * Checks if a match already exists between two persons.

@@ -1,7 +1,7 @@
 package org.kusalainstitute.surveys.wicket.panel;
 
+import java.io.Serializable;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.wicket.AttributeModifier;
 import org.apache.wicket.markup.html.WebMarkupContainer;
@@ -42,14 +42,13 @@ public class EnumDistributionSummaryPanel extends GenericPanel<SituationAnalysis
 	{
 		super.onInitialize();
 
-		SituationAnalysisModel data = getModelObject();
-		List<EnumDistribution> distributions = data.getEnumDistributions();
+		var dataModel = getModel();
 
 		TooltipConfig tooltipConfig = new TooltipConfig().withPlacement(TooltipConfig.Placement.top).withHtml(true);
 
-		// PRE survey distributions (first 4)
-		List<EnumDistribution> preDistributions = distributions.subList(0, 4);
-		add(new ListView<>("preDistributions", preDistributions)
+		// PRE survey distributions (first 4) - using dynamic model
+		add(new ListView<>("preDistributions",
+			dataModel.map(d -> d.getEnumDistributions().subList(0, 4)))
 		{
 			@Override
 			protected void populateItem(ListItem<EnumDistribution> item)
@@ -58,9 +57,9 @@ public class EnumDistributionSummaryPanel extends GenericPanel<SituationAnalysis
 			}
 		});
 
-		// POST survey distributions (last 3)
-		List<EnumDistribution> postDistributions = distributions.subList(4, 7);
-		add(new ListView<>("postDistributions", postDistributions)
+		// POST survey distributions (last 3) - using dynamic model
+		add(new ListView<>("postDistributions",
+			dataModel.map(d -> d.getEnumDistributions().subList(4, 7)))
 		{
 			@Override
 			protected void populateItem(ListItem<EnumDistribution> item)
@@ -94,14 +93,15 @@ public class EnumDistributionSummaryPanel extends GenericPanel<SituationAnalysis
 
 		// Distribution rows
 		int maxCount = dist.getMaxCount();
-		item.add(new ListView<>("distributionRows", List.copyOf(dist.valueCounts().entrySet()))
+		item.add(new ListView<>("distributionRows",
+			List.copyOf(dist.valueCounts().entrySet()).stream().map(e -> new Entry(e.getKey(), e.getValue())).toList())
 		{
 			@Override
-			protected void populateItem(ListItem<Map.Entry<String, Integer>> rowItem)
+			protected void populateItem(ListItem<Entry> rowItem)
 			{
-				Map.Entry<String, Integer> entry = rowItem.getModelObject();
-				String valueLabel = entry.getKey();
-				int count = entry.getValue();
+				Entry entry = rowItem.getModelObject();
+				String valueLabel = entry.key();
+				int count = entry.value();
 				int percent = dist.getPercent(count);
 
 				rowItem.add(new Label("valueLabel", valueLabel));
@@ -118,5 +118,9 @@ public class EnumDistributionSummaryPanel extends GenericPanel<SituationAnalysis
 				rowItem.add(bar);
 			}
 		});
+	}
+
+	record Entry(String key, Integer value) implements Serializable
+	{
 	}
 }

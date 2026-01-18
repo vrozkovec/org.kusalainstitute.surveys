@@ -35,17 +35,19 @@ public class ImprovementSummaryTextPanel extends GenericPanel<SituationAnalysisM
 	{
 		super.onInitialize();
 
-		add(new Label("summaryText", this::buildSummaryText).setEscapeModelStrings(false));
+		// Use model-based label for proper AJAX refresh
+		add(new Label("summaryText", getModel().map(this::buildSummaryText)).setEscapeModelStrings(false));
 	}
 
 	/**
 	 * Builds the AI-friendly text representation of improvement summary.
 	 *
+	 * @param model
+	 *            the analysis model
 	 * @return formatted text summary
 	 */
-	private String buildSummaryText()
+	private String buildSummaryText(SituationAnalysisModel model)
 	{
-		SituationAnalysisModel model = getModelObject();
 		if (model == null)
 		{
 			return "No data available.";

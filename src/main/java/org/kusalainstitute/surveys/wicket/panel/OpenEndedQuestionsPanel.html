@@ -99,6 +99,19 @@
     <h3>Open-Ended Questions Summary</h3>
     <p><em>All non-empty responses grouped by question (anonymous).</em></p>
 
+    <!-- Cohort Filter -->
+    <form wicket:id="filterForm" class="mb-4">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <label class="form-label fw-bold mb-0">Filter by Cohort:</label>
+            </div>
+            <div class="col-md-4">
+                <select wicket:id="cohortFilter"></select>
+            </div>
+        </div>
+    </form>
+
+    <div wicket:id="contentContainer">
     <div wicket:id="questions" class="question-block">
         <div class="question-header">
             <span class="question-number" wicket:id="questionNumber"></span>
@@ -112,6 +125,7 @@
             </li>
         </ul>
     </div>
+    </div><!-- /contentContainer -->
 </div>
 
 </wicket:panel>

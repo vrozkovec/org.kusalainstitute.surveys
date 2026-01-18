@@ -8,7 +8,7 @@
 	width: 100%;
 	overflow-x: auto;
 	overflow-y: auto;
-	max-height: 80vh;
+	max-height: 70vh;
 	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 	border: 1px solid #dee2e6;
 	margin-bottom: 20px;
@@ -382,6 +382,19 @@
 				Ease: Post Q7 Inv (Purple).</em>
 		</p>
 
+		<!-- Cohort Filter -->
+		<form wicket:id="filterForm" class="mb-4">
+			<div class="row align-items-center">
+				<div class="col-auto">
+					<label class="form-label fw-bold mb-0">Filter by Cohort:</label>
+				</div>
+				<div class="col-md-4">
+					<select wicket:id="cohortFilter"></select>
+				</div>
+			</div>
+		</form>
+
+		<div wicket:id="contentContainer">
 		<div class="situation-table-wrapper">
 			<table class="situation-table">
 				<thead>
@@ -509,6 +522,7 @@
 			<div wicket:id="ratingDistribution"></div>
 			<div wicket:id="enumDistribution"></div>
 		</div>
+		</div><!-- /contentContainer -->
 	</wicket:panel>
 </body>
 </html>

@@ -34,17 +34,19 @@ public class EnumDistributionSummaryTextPanel extends GenericPanel<SituationAnal
 	{
 		super.onInitialize();
 
-		add(new Label("enumText", this::buildEnumText).setEscapeModelStrings(false));
+		// Use model-based label for proper AJAX refresh
+		add(new Label("enumText", getModel().map(this::buildEnumText)).setEscapeModelStrings(false));
 	}
 
 	/**
 	 * Builds the AI-friendly text representation of enum distributions.
 	 *
+	 * @param model
+	 *            the analysis model
 	 * @return formatted text with enum distributions
 	 */
-	private String buildEnumText()
+	private String buildEnumText(SituationAnalysisModel model)
 	{
-		SituationAnalysisModel model = getModelObject();
 		if (model == null)
 		{
 			return "No data available.";
