@@ -21,7 +21,7 @@ domains:
    files: files.surveys.kusalainstitute.eu
    imagesProxy: images.surveys.kusalainstitute.eu
    
-filesFolder: cz.aperto.jidelnicek
+filesFolder: org.kusalainstitute.surveys
 
 nginx:
    cacheIdentifier: KusalaInstituteSurveysCache
