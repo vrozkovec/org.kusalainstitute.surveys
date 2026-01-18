@@ -60,7 +60,7 @@ public class MatchingService
 	{
 		this.jdbi = jdbi;
 		this.manualMatchPersistence = manualMatchPersistence;
-		this.levenshtein = new LevenshteinDistance();
+		levenshtein = LevenshteinDistance.getDefaultInstance();
 	}
 
 	/**
@@ -68,8 +68,10 @@ public class MatchingService
 	 * <p>
 	 * Handles special cases:
 	 * <ul>
-	 * <li>"all?" cohort: PRE responses with cohort="all?" are matched against ALL non-"all?" POST cohorts</li>
-	 * <li>Shared emails: Emails used by multiple people with different names are matched by name only</li>
+	 * <li>"all?" cohort: PRE responses with cohort="all?" are matched against ALL non-"all?" POST
+	 * cohorts</li>
+	 * <li>Shared emails: Emails used by multiple people with different names are matched by name
+	 * only</li>
 	 * </ul>
 	 *
 	 * @return number of new matches created
@@ -85,9 +87,11 @@ public class MatchingService
 			List<Person> prePeople = personDao.findUnmatchedPre();
 			List<Person> postPeople = personDao.findUnmatchedPost();
 
-			LOG.info("Found {} unmatched pre-survey and {} unmatched post-survey persons", prePeople.size(), postPeople.size());
+			LOG.info("Found {} unmatched pre-survey and {} unmatched post-survey persons", prePeople.size(),
+				postPeople.size());
 
-			// Identify shared emails (same email, different names) - these should match by name only
+			// Identify shared emails (same email, different names) - these should match by name
+			// only
 			Set<String> sharedEmails = findSharedEmails(prePeople);
 			if (!sharedEmails.isEmpty())
 			{
@@ -100,9 +104,7 @@ public class MatchingService
 
 			// Collect all non-wildcard POST cohorts for "all?" matching
 			List<Person> allNonWildcardPost = postByCohort.entrySet().stream()
-				.filter(e -> !WILDCARD_COHORT.equals(e.getKey()))
-				.flatMap(e -> e.getValue().stream())
-				.toList();
+				.filter(e -> !WILDCARD_COHORT.equals(e.getKey())).flatMap(e -> e.getValue().stream()).toList();
 
 			int emailMatches = 0;
 			int nameMatches = 0;
@@ -119,8 +121,8 @@ public class MatchingService
 				if (WILDCARD_COHORT.equals(preCohort))
 				{
 					targetPostPeople = allNonWildcardPost;
-					LOG.info("Processing '{}' cohort PRE people ({}) against all POST cohorts ({})",
-						preCohort, preInCohort.size(), targetPostPeople.size());
+					LOG.info("Processing '{}' cohort PRE people ({}) against all POST cohorts ({})", preCohort,
+						preInCohort.size(), targetPostPeople.size());
 				}
 				else
 				{
@@ -134,9 +136,8 @@ public class MatchingService
 
 				// Filter out already matched POST people
 				List<Person> unmatchedPre = new ArrayList<>(preInCohort);
-				List<Person> unmatchedPost = new ArrayList<>(targetPostPeople.stream()
-					.filter(p -> !matchedPostIds.contains(p.getId()))
-					.toList());
+				List<Person> unmatchedPost = new ArrayList<>(
+					targetPostPeople.stream().filter(p -> !matchedPostIds.contains(p.getId())).toList());
 
 				// First pass: exact email matching (skip people with shared emails)
 				for (Person pre : new ArrayList<>(unmatchedPre))
@@ -162,7 +163,8 @@ public class MatchingService
 
 						if (pre.getNormalizedEmail().equals(post.getNormalizedEmail()))
 						{
-							// Use POST person's cohort for match record (especially important for "all?" PRE)
+							// Use POST person's cohort for match record (especially important for
+							// "all?" PRE)
 							String matchCohort = WILDCARD_COHORT.equals(preCohort) ? post.getCohort() : preCohort;
 							createMatch(matchDao, matchCohort, pre, post, MatchType.AUTO_EMAIL, BigDecimal.ONE);
 							unmatchedPre.remove(pre);
@@ -202,9 +204,11 @@ public class MatchingService
 
 					if (bestMatch != null)
 					{
-						// Use POST person's cohort for match record (especially important for "all?" PRE)
+						// Use POST person's cohort for match record (especially important for
+						// "all?" PRE)
 						String matchCohort = WILDCARD_COHORT.equals(preCohort) ? bestMatch.getCohort() : preCohort;
-						createMatch(matchDao, matchCohort, pre, bestMatch, MatchType.AUTO_NAME, BigDecimal.valueOf(bestSimilarity));
+						createMatch(matchDao, matchCohort, pre, bestMatch, MatchType.AUTO_NAME,
+							BigDecimal.valueOf(bestSimilarity));
 						unmatchedPre.remove(pre);
 						unmatchedPost.remove(bestMatch);
 						matchedPostIds.add(bestMatch.getId());
@@ -328,8 +332,8 @@ public class MatchingService
 	 * Finds emails that are shared by multiple people with different names.
 	 * <p>
 	 * Some survey respondents didn't have their own email address, so one email is shared by
-	 * multiple family members or friends with different names. For these cases, matching should
-	 * be based on name only, not email, to avoid incorrect matches.
+	 * multiple family members or friends with different names. For these cases, matching should be
+	 * based on name only, not email, to avoid incorrect matches.
 	 *
 	 * @param people
 	 *            list of people to analyze
@@ -396,7 +400,7 @@ public class MatchingService
 		}
 
 		int distance = levenshtein.apply(n1, n2);
-		return 1.0 - ((double) distance / maxLength);
+		return 1.0 - ((double)distance / maxLength);
 	}
 
 	/**
@@ -436,11 +440,9 @@ public class MatchingService
 			}
 
 			// Get timestamps from survey responses
-			LocalDateTime preTimestamp = preSurveyDao.findByPersonId(prePersonId)
-				.map(PreSurveyResponse::getTimestamp)
+			LocalDateTime preTimestamp = preSurveyDao.findByPersonId(prePersonId).map(PreSurveyResponse::getTimestamp)
 				.orElse(null);
-			LocalDateTime postTimestamp = postSurveyDao.findByPersonId(postPersonId)
-				.map(PostSurveyResponse::getTimestamp)
+			LocalDateTime postTimestamp = postSurveyDao.findByPersonId(postPersonId).map(PostSurveyResponse::getTimestamp)
 				.orElse(null);
 
 			// Create database match
@@ -479,18 +481,12 @@ public class MatchingService
 					MatchDao matchDao = handle.attach(MatchDao.class);
 
 					// Find PRE person by composite key
-					Optional<Person> preOpt = personDao.findByCompositeKey(
-						entry.preEmail(),
-						entry.preName(),
-						SurveyType.PRE,
-						entry.preTimestamp());
+					Optional<Person> preOpt = personDao.findByCompositeKey(entry.preEmail(), entry.preName(),
+						SurveyType.PRE, entry.preTimestamp());
 
 					// Find POST person by composite key
-					Optional<Person> postOpt = personDao.findByCompositeKey(
-						entry.postEmail(),
-						entry.postName(),
-						SurveyType.POST,
-						entry.postTimestamp());
+					Optional<Person> postOpt = personDao.findByCompositeKey(entry.postEmail(), entry.postName(),
+						SurveyType.POST, entry.postTimestamp());
 
 					if (preOpt.isPresent() && postOpt.isPresent())
 					{
@@ -504,7 +500,8 @@ public class MatchingService
 							return true;
 						}
 
-						PersonMatch match = new PersonMatch(pre.getCohort(), pre.getId(), post.getId(), MatchType.MANUAL, null);
+						PersonMatch match = new PersonMatch(pre.getCohort(), pre.getId(), post.getId(), MatchType.MANUAL,
+							null);
 						match.setMatchedBy(entry.createdBy());
 						match.setNotes(entry.notes());
 						matchDao.insert(match);
@@ -514,8 +511,7 @@ public class MatchingService
 					}
 					else
 					{
-						LOG.warn("Could not find persons for stored match: {} -> {}",
-							entry.preName(), entry.postName());
+						LOG.warn("Could not find persons for stored match: {} -> {}", entry.preName(), entry.postName());
 						return false;
 					}
 				});
@@ -562,26 +558,13 @@ public class MatchingService
 					Person post = postOpt.get();
 
 					LocalDateTime preTimestamp = preSurveyDao.findByPersonId(pre.getId())
-						.map(PreSurveyResponse::getTimestamp)
-						.orElse(null);
+						.map(PreSurveyResponse::getTimestamp).orElse(null);
 					LocalDateTime postTimestamp = postSurveyDao.findByPersonId(post.getId())
-						.map(PostSurveyResponse::getTimestamp)
-						.orElse(null);
+						.map(PostSurveyResponse::getTimestamp).orElse(null);
 
-					result.add(new MatchRowData(
-						match.getId(),
-						match.getCohort(),
-						match.getMatchType(),
-						match.getMatchedBy(),
-						match.getNotes(),
-						pre.getId(),
-						pre.getName(),
-						pre.getEmail(),
-						preTimestamp,
-						post.getId(),
-						post.getName(),
-						post.getEmail(),
-						postTimestamp));
+					result.add(new MatchRowData(match.getId(), match.getCohort(), match.getMatchType(),
+						match.getMatchedBy(), match.getNotes(), pre.getId(), pre.getName(), pre.getEmail(), preTimestamp,
+						post.getId(), post.getName(), post.getEmail(), postTimestamp));
 				}
 			}
 
@@ -605,18 +588,11 @@ public class MatchingService
 
 			for (Person person : persons)
 			{
-				LocalDateTime timestamp = preSurveyDao.findByPersonId(person.getId())
-					.map(PreSurveyResponse::getTimestamp)
+				LocalDateTime timestamp = preSurveyDao.findByPersonId(person.getId()).map(PreSurveyResponse::getTimestamp)
 					.orElse(null);
 
-				result.add(new UnmatchedPersonData(
-					person.getId(),
-					person.getCohort(),
-					person.getName(),
-					person.getEmail(),
-					person.getSurveyType(),
-					person.isRequiresManualMatch(),
-					timestamp));
+				result.add(new UnmatchedPersonData(person.getId(), person.getCohort(), person.getName(), person.getEmail(),
+					person.getSurveyType(), person.isRequiresManualMatch(), timestamp));
 			}
 
 			return result;
@@ -639,18 +615,11 @@ public class MatchingService
 
 			for (Person person : persons)
 			{
-				LocalDateTime timestamp = postSurveyDao.findByPersonId(person.getId())
-					.map(PostSurveyResponse::getTimestamp)
+				LocalDateTime timestamp = postSurveyDao.findByPersonId(person.getId()).map(PostSurveyResponse::getTimestamp)
 					.orElse(null);
 
-				result.add(new UnmatchedPersonData(
-					person.getId(),
-					person.getCohort(),
-					person.getName(),
-					person.getEmail(),
-					person.getSurveyType(),
-					person.isRequiresManualMatch(),
-					timestamp));
+				result.add(new UnmatchedPersonData(person.getId(), person.getCohort(), person.getName(), person.getEmail(),
+					person.getSurveyType(), person.isRequiresManualMatch(), timestamp));
 			}
 
 			return result;
