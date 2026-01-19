@@ -110,16 +110,11 @@ public abstract class SetupPage extends CommonStylePage
 		response.render(new PriorityHeaderItem(
 			JavaScriptHeaderItem.forReference(Application.get().getJavaScriptLibrarySettings().getJQueryReference())));
 
-		if (!WicketAppUtil.localMode())
-		{
-			response.render(CssHeaderItem.forReference(FontAwesome5CssReference.instance()));
-			response.render(CssHeaderItem.forUrl("https://jidelnicek.aperto.cz/css/style.css?" + cssVersion));
-		}
-		else
+		response.render(CssHeaderItem.forReference(FontAwesome5CssReference.instance()));
+
+		if (WicketAppUtil.localMode())
 		{
 			DevLiveReloadUrlReference.addTo(response);
-			response.render(CssHeaderItem.forReference(FontAwesome5CssReference.instance()));
-			response.render(CssHeaderItem.forUrl("http://localhost:8080/css/style.css"));
 		}
 	}
 
