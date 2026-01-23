@@ -58,9 +58,10 @@ public class PostSurveyResponse
 	private String whatHelpedMostTranslated;
 
 	/*
-	 * Q6: Évaluez votre capacité à parler anglais dans les situations suivantes.<br> Rate your
-	 * ability to speak English in the following situations. (11 situations, 1-4 scale: 1=Very well,
-	 * 2=Somewhat well, 3=Not very well, 4=I cannot speak)
+	 * Q6: Depuis que vous utilisez l'appli, veuillez évaluer votre capacité à PARLER anglais dans
+	 * les situations suivantes<br> Since you started using the app, please rate your ability to
+	 * SPEAK English in the following situations (11 situations, 1-4 scale: 1=Very well, 2=Somewhat
+	 * well, 3=Not very well, 4=I cannot speak)
 	 */
 	private Integer speakDirections;
 	private Integer speakHealthcare;
@@ -204,8 +205,7 @@ public class PostSurveyResponse
 		int count = 0;
 
 		Integer[] values = { speakDirections, speakHealthcare, speakAuthorities, speakJobInterview, speakInformal,
-				speakChildrenEducation, speakLandlord, speakSocialEvents, speakLocalServices, speakSupportOrgs,
-				speakShopping };
+				speakChildrenEducation, speakLandlord, speakSocialEvents, speakLocalServices, speakSupportOrgs, speakShopping };
 
 		for (Integer value : values)
 		{
@@ -1434,7 +1434,7 @@ public class PostSurveyResponse
 	@Override
 	public String toString()
 	{
-		return "PostSurveyResponse{" + "id=" + id + ", personId=" + personId + ", timestamp=" + timestamp
-			+ ", avgSpeakingAbility=" + avgSpeakingAbility + '}';
+		return "PostSurveyResponse{" + "id=" + id + ", personId=" + personId + ", timestamp=" + timestamp + ", avgSpeakingAbility="
+			+ avgSpeakingAbility + '}';
 	}
 }
