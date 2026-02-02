@@ -6,18 +6,14 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * Children age group options for PRE survey Q4.
- * Uses letter codes A-E for language-independent storage.
- * This is a multi-select field - users can choose multiple options.
+ * Children age group options for PRE survey Q4. Uses letter codes A-E for language-independent
+ * storage. This is a multi-select field - users can choose multiple options.
  */
 public enum ChildrenAgeGroup
 {
 
-	A("5 and under", "5 ans et moins"),
-	B("6-12", "6-12 ans"),
-	C("13-18", "13-18 ans"),
-	D("19+", "19 ans et plus"),
-	E("No children", "Pas d'enfants");
+	A("5 and under", "5 ans et moins"), B("6-12", "6-12 ans"), C("13-18", "13-18 ans"), D("19+", "19 ans et plus"), E("No children",
+		"Pas d'enfants");
 
 	private final String englishLabel;
 	private final String frenchLabel;
@@ -46,107 +42,6 @@ public enum ChildrenAgeGroup
 	public String getFrenchLabel()
 	{
 		return frenchLabel;
-	}
-
-	/**
-	 * Parses a text value to a ChildrenAgeGroup. Handles French and English variations.
-	 *
-	 * @param text
-	 *            the response text for a single option
-	 * @return the corresponding ChildrenAgeGroup, or null if not found
-	 */
-	public static ChildrenAgeGroup fromText(String text)
-	{
-		if (StringUtils.isBlank(text))
-		{
-			return null;
-		}
-
-		String normalized = text.toLowerCase().trim();
-
-		// Try exact code match first (A, B, C, etc.)
-		if (normalized.length() == 1)
-		{
-			try
-			{
-				return valueOf(normalized.toUpperCase());
-			}
-			catch (IllegalArgumentException e)
-			{
-				// Not a valid code
-			}
-		}
-
-		// Try letter prefix (e.g., "A= 5 ans et moins")
-		if (normalized.length() >= 1 && Character.isLetter(normalized.charAt(0)))
-		{
-			char prefix = Character.toUpperCase(normalized.charAt(0));
-			if (prefix >= 'A' && prefix <= 'E')
-			{
-				try
-				{
-					return valueOf(String.valueOf(prefix));
-				}
-				catch (IllegalArgumentException e)
-				{
-					// Continue to content matching
-				}
-			}
-		}
-
-		// Content matching
-		if (normalized.contains("5 ans et moins") || normalized.contains("5 and under") || normalized.contains("5 ou moins"))
-		{
-			return A;
-		}
-		if (normalized.contains("6-12"))
-		{
-			return B;
-		}
-		if (normalized.contains("13-18"))
-		{
-			return C;
-		}
-		if (normalized.contains("19 ans") || normalized.contains("19+") || normalized.contains("19 et plus"))
-		{
-			return D;
-		}
-		if (normalized.contains("pas d'enfants") || normalized.contains("no children") || normalized.contains("pas d'enfant"))
-		{
-			return E;
-		}
-
-		return null;
-	}
-
-	/**
-	 * Parses a multi-select text value to a set of ChildrenAgeGroups.
-	 * Values may be separated by comma, semicolon, or newline.
-	 *
-	 * @param text
-	 *            the combined response text
-	 * @return set of corresponding ChildrenAgeGroups (empty if none found)
-	 */
-	public static Set<ChildrenAgeGroup> fromMultiSelectText(String text)
-	{
-		Set<ChildrenAgeGroup> result = EnumSet.noneOf(ChildrenAgeGroup.class);
-		if (StringUtils.isBlank(text))
-		{
-			return result;
-		}
-
-		// Split by common delimiters
-		String[] parts = text.split("[,;\\n]+");
-		for (String part : parts)
-		{
-			ChildrenAgeGroup group = fromText(part.trim());
-			if (group != null)
-			{
-				result.add(group);
-			}
-		}
-
-		return result;
 	}
 
 	/**
@@ -224,9 +119,6 @@ public enum ChildrenAgeGroup
 			return null;
 		}
 
-		return String.join(",", groups.stream()
-			.sorted()
-			.map(ChildrenAgeGroup::getCode)
-			.toList());
+		return String.join(",", groups.stream().sorted().map(ChildrenAgeGroup::getCode).toList());
 	}
 }

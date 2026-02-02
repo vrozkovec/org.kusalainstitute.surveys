@@ -14,6 +14,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.kusalainstitute.surveys.mapper.ConfidenceLevelMapper;
 import org.kusalainstitute.surveys.pojo.enums.ConfidenceLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +26,7 @@ public abstract class ExcelParser
 {
 
 	protected final Logger log = LoggerFactory.getLogger(getClass());
+	private final ConfidenceLevelMapper confidenceLevelMapper = new ConfidenceLevelMapper();
 
 	/**
 	 * Opens an Excel workbook from a file path. Supports both filesystem paths and JAR resource
@@ -232,11 +234,7 @@ public abstract class ExcelParser
 			return null;
 		}
 
-		ConfidenceLevel level = ConfidenceLevel.fromFrench(text);
-		if (level == null)
-		{
-			level = ConfidenceLevel.fromEnglish(text);
-		}
+		ConfidenceLevel level = confidenceLevelMapper.map(text);
 
 		return level != null ? level.getValue() : null;
 	}
