@@ -14,4 +14,7 @@
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
     </root>
+
+    <!-- Local dev overrides (file absent on server = silently ignored) -->
+    <include optional="true" file="${user.home}/.config/.logback-local.xml" />
 </configuration>
